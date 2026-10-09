@@ -1,0 +1,46 @@
+# Live application data, authentication configuration, backups, and logs
+/.data/
+/.backup/
+/.logs/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.log
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Cloudflare runtime, tunnel credentials, and machine-specific configuration
+/.tools/cloudflared/
+
+# Browser sessions and generated acceptance-test artifacts
+/.browser-profile/
+/.browser-profile-public/
+/.tools/browser-profiles/
+artifacts/
+
+# Downloaded runtimes, installers, dependencies, and staging copies
+/.tools/python/
+/.tools/python-*.zip
+/.tools/node-runtime/
+/.tools/final-acceptance/get-pip.py
+/.tools/upgrade/stage/
+vendor/
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Local design tooling and operating-system files
+/.tools/impeccable/
+/.superdesign/
+.DS_Store
+Thumbs.db
+Desktop.ini

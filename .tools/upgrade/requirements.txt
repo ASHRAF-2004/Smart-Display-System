@@ -1,0 +1,4 @@
+google-auth==2.57.1
+requests==2.34.2
+Pillow==12.3.0
+cryptography==50.0.1
