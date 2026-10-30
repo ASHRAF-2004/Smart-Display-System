@@ -24,7 +24,9 @@ Use an isolated test instance and test data, not a live organization's records.
 | SSE | Two browser clients update without refresh; reconnect after restart |
 | TV | Zero, one, four, nine and many tasks; no manual scrolling; automatic rotation |
 | Responsive | 320, 390, 768, 1366 and 1920 px; both themes; no horizontal overflow |
-| Deadlines | Past blocked, future accepted, overdue computed; current Malaysia timezone |
+| Deadlines | Past blocked, future accepted, overdue computed; configured IANA timezone |
+| Visibility | Before start / between bounds / after end; end must be later than start |
+| First run | Zero accounts/tasks, private config, configured timezone and title |
 | Hardening | Protected files never served; loopback binding; Origin/CSRF enforced |
 | Recovery | Database integrity, stop/restart and re-read consistent state |
 

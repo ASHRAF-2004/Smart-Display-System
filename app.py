@@ -33,7 +33,7 @@ DEFAULT_TASKS = {day: [] for day in DAYS}
 DEFAULT_SETTINGS = {
     "directives": [],
     "supervisors": [],
-    "tickerText": "Welcome! Add announcements in the Admin Panel.",
+    "tickerText": "",
     "customLogoUrl": None,
     "selectedDay": "Monday",
 }
@@ -138,6 +138,9 @@ def task_record(row: sqlite3.Row, conn=None) -> dict:
         "updatedAt": row["updated_at"],
         "version": row["version"],
         "deadlineUtc": row['deadline_utc'],
+        "visibleFromUtc": row['visible_from_utc'],
+        "visibleUntilUtc": row['visible_until_utc'],
+        "channel": row['channel'],
         "overdue": bool(row['deadline_utc'] and row['status'] != 'completed' and datetime.fromisoformat(row['deadline_utc']) < datetime.now(timezone.utc)),
         "media": media,
     }
@@ -164,6 +167,7 @@ def state(conn: sqlite3.Connection | None = None) -> dict:
             "selectedDay": settings.get("selectedDay", DAYS[0]),
             "version": version,
             "siteName": read_site_config().get("site_name", "Smart Display System"),
+            "timeZone": read_site_config().get("timezone", "UTC"),
             "serverTime": now(),
         }
     finally:
@@ -172,7 +176,7 @@ def state(conn: sqlite3.Connection | None = None) -> dict:
 
 
 def clean_task(payload: dict, partial: bool = False) -> dict:
-    allowed = ("day", "title", "dept", "priority", "time", "desc", "imageUrl", "status", "deadlineUtc")
+    allowed = ("day", "title", "dept", "priority", "time", "desc", "imageUrl", "status", "deadlineUtc", "visibleFromUtc", "visibleUntilUtc", "channel")
     if not isinstance(payload, dict):
         raise ValueError("JSON object required")
     value = {key: payload[key] for key in allowed if key in payload}
@@ -180,6 +184,10 @@ def clean_task(payload: dict, partial: bool = False) -> dict:
         raise ValueError("day, title, department and priority are required")
     if "day" in value and value["day"] not in DAYS:
         raise ValueError("invalid day")
+    if "channel" in value:
+        import re
+        if not isinstance(value["channel"], str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,31}", value["channel"]):
+            raise ValueError("channel must be a lowercase slug such as lobby or general")
     if "priority" in value and value["priority"] not in PRIORITIES:
         raise ValueError("invalid priority")
     if "status" in value and value["status"] not in STATUSES:
@@ -376,12 +384,12 @@ class Handler(BaseHTTPRequestHandler):
                 security.media_mutation(self, int(path.split('/')[3]), actor, method)
                 return
             if method == "POST" and path == "/api/tasks":
-                task = security.deadline(clean_task(self.read_json()))
+                task = security.visibility(security.deadline(clean_task(self.read_json())))
                 def add(conn):
                     stamp = now()
                     cur = conn.execute("INSERT INTO tasks (day,title,dept,priority,task_time,description,image_url,status,created_at,updated_at,version) VALUES (?,?,?,?,?,?,?,?,?,?,1)", (task["day"], task["title"], task["dept"], task["priority"], task.get("time", ""), task.get("desc", ""), task.get("imageUrl", ""), task.get("status", "pending"), stamp, stamp))
                     task_id = cur.lastrowid
-                    conn.execute('UPDATE tasks SET deadline_utc=?,created_by=?,updated_by=? WHERE id=?', (task.get('deadlineUtc'), actor, actor, task_id))
+                    conn.execute('UPDATE tasks SET deadline_utc=?,visible_from_utc=?,visible_until_utc=?,channel=?,created_by=?,updated_by=? WHERE id=?', (task.get('deadlineUtc'), task.get('visibleFromUtc'), task.get('visibleUntilUtc'), task.get('channel', 'general'), actor, actor, task_id))
                     row = conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
                     return {"result": task_id, "task": task_record(row, conn)}
                 self.send_json(commit_mutation("created", add), 201)
@@ -390,12 +398,13 @@ class Handler(BaseHTTPRequestHandler):
                 changes = clean_task(self.read_json(), partial=True)
                 if not changes:
                     raise ValueError("no task fields supplied")
-                columns = {"day": "day", "title": "title", "dept": "dept", "priority": "priority", "time": "task_time", "desc": "description", "imageUrl": "image_url", "status": "status", "deadlineUtc": "deadline_utc"}
+                columns = {"day": "day", "title": "title", "dept": "dept", "priority": "priority", "time": "task_time", "desc": "description", "imageUrl": "image_url", "status": "status", "deadlineUtc": "deadline_utc", "visibleFromUtc": "visible_from_utc", "visibleUntilUtc": "visible_until_utc", "channel": "channel"}
                 def update(conn):
                     old = conn.execute('SELECT * FROM tasks WHERE id=?', (task_id,)).fetchone()
                     if not old:
                         raise security.Problem(404, 'task_not_found')
                     security.deadline(changes, old)
+                    security.visibility(changes, old)
                     fields = [f"{columns[k]}=?" for k in changes]
                     args = list(changes.values()) + [actor, now(), task_id]
                     cur = conn.execute(f"UPDATE tasks SET {','.join(fields)},updated_by=?,updated_at=?,version=version+1 WHERE id=?", args)
@@ -424,13 +433,13 @@ class Handler(BaseHTTPRequestHandler):
                 items = raw.get("tasks", []) if isinstance(raw, dict) else []
                 if len(items) > 100:
                     raise ValueError('Import at most 100 tasks at a time')
-                cleaned = [security.deadline(clean_task(item)) for item in items]
+                cleaned = [security.visibility(security.deadline(clean_task(item))) for item in items]
                 def imported(conn):
                     stamp = now()
                     inserted = []
                     for item in cleaned:
                         cur = conn.execute("INSERT INTO tasks (day,title,dept,priority,task_time,description,image_url,status,created_at,updated_at,version) VALUES (?,?,?,?,?,?,?,?,?,?,1)", (item["day"], item["title"], item["dept"], item["priority"], item.get("time", ""), item.get("desc", ""), item.get("imageUrl", ""), item.get("status", "pending"), stamp, stamp))
-                        conn.execute('UPDATE tasks SET deadline_utc=?,created_by=?,updated_by=? WHERE id=?', (item.get('deadlineUtc'), actor, actor, cur.lastrowid))
+                        conn.execute('UPDATE tasks SET deadline_utc=?,visible_from_utc=?,visible_until_utc=?,channel=?,created_by=?,updated_by=? WHERE id=?', (item.get('deadlineUtc'), item.get('visibleFromUtc'), item.get('visibleUntilUtc'), item.get('channel', 'general'), actor, actor, cur.lastrowid))
                         row = conn.execute("SELECT * FROM tasks WHERE id=?", (cur.lastrowid,)).fetchone()
                         inserted.append(task_record(row, conn))
                     return {"result": len(inserted), "tasks": inserted}

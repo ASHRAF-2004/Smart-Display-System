@@ -8,6 +8,7 @@ import re
 import sys
 from pathlib import Path
 from urllib.parse import urlsplit
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -35,6 +36,7 @@ def valid_origin(value: str) -> bool:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--site-name", help="Display name, 1 to 60 characters")
+    parser.add_argument("--timezone", help="IANA timezone, e.g. Europe/London (default: UTC)")
     parser.add_argument("--google-client-id", help="Public OAuth Web Client ID, not a client secret")
     parser.add_argument("--editor", help="Email of an approved Google editor")
     parser.add_argument("--public-origin", help="Public HTTPS origin, no path")
@@ -42,6 +44,11 @@ def main() -> None:
 
     if args.site_name and not 1 <= len(args.site_name.strip()) <= 60:
         parser.error("Site name must be 1–60 characters")
+    if args.timezone:
+        try:
+            ZoneInfo(args.timezone)
+        except (ZoneInfoNotFoundError, ValueError):
+            parser.error("Enter a valid IANA timezone, e.g. UTC or Europe/London")
     if args.google_client_id and not re.fullmatch(r"[0-9]+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com", args.google_client_id):
         parser.error("Invalid Google OAuth Web Client ID")
     if args.editor and not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", args.editor.strip()):
@@ -67,6 +74,7 @@ def main() -> None:
     site = json.loads(site_path.read_text(encoding="utf-8")) if site_path.exists() else {}
     if args.site_name:
         site["site_name"] = args.site_name.strip()
+    site["timezone"] = args.timezone or site.get("timezone", "UTC")
     site_path.write_text(json.dumps(site, indent=2) + "\n", encoding="utf-8")
 
     if args.editor:

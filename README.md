@@ -13,13 +13,13 @@ Self-hosted digital signage for offices, schools, labs and shared spaces. Publis
 </div>
 
 > [!IMPORTANT]
-> The repository is a **normal, brand-neutral application**, not a GitHub template feature. Clone it, provide your own name/logo and staff accounts, and run your own instance. Screenshots, organizational identities and deployment credentials from the original installation are not included in the current source tree.
+> **Your screens, your identity.** Start with an empty board and a neutral logo placeholder. Choose a display name, authorize your Editors, then publish your own announcements. No sample employees, hard-coded company domain or bundled business data.
 
 ## Why use it?
 
 Traditional signage platforms often require extensive configuration before displaying a single announcement. Smart Display System favors a smaller workflow:
 
-**Create an item → publish → watch it update on connected screens.**
+**Create an item → optionally schedule its display window → publish → watch it update on connected screens.**
 
 No separate database server, no mandatory container platform, and no paid cloud service for the local viewer. Your tasks and uploaded media stay on your host.
 
@@ -35,15 +35,18 @@ No separate database server, no mandatory container platform, and no paid cloud 
 | JPEG, PNG, WebP, GIF, MP4, WebM uploads (up to 25 MiB) | Available |
 | Editor sign-in via Google, server-side allowlist | Available (requires your own OAuth client) |
 | Public read-only display | Available |
-| Deadline validation and computed overdue status | Available; current timezone is Asia/Kuala_Lumpur |
+| Deadline validation and computed overdue status | Available |
+| Optional show-from / show-until visibility windows | Available; independent of due dates |
+| Configurable instance timezone (IANA) | Available; defaults to UTC |
 | Day/Night themes and responsive interfaces | Available |
 | Global selected weekday | Available |
+| Multiple TV channels via `?channel=lobby` | Available, same backend and global selected weekday |
 | Custom uploaded logo and configurable display name | Available |
 | Recurring tasks and distinct display/expiry schedule | Planned |
-| Per-screen channels, playlists and remote fleet monitoring | Planned |
+| Per-screen playlists and remote fleet monitoring | Planned |
 | Offline signage playback | Planned |
 
-Existing and future requirements are tracked separately in [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md). Do not confuse a task's **due date** with when an announcement disappears: the application currently does not have an automatic visibility end-time.
+Existing and future requirements are tracked separately in [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md). Do not confuse a task's **due date** with when an announcement disappears: a visibility end-time can now hide a notice from the TV without deleting its task record. Recurring tasks and per-display playlists remain unimplemented.
 
 ## Quick start
 
@@ -65,11 +68,11 @@ source .venv/bin/activate
 
 ```bash
 python -m pip install -r requirements.txt
-python scripts/first_run.py --site-name "My Display"
+python scripts/first_run.py --site-name "My Display" --timezone "Europe/London"
 python app.py --port 8787
 ```
 
-Open **http://127.0.0.1:8787/**. A new instance starts with an empty board, a neutral **YOUR LOGO** placeholder and no preauthorized staff.
+Open **http://127.0.0.1:8787/**. A new instance starts with an empty board, a neutral **YOUR LOGO** placeholder and no preauthorized staff. If you omit `--timezone`, the system uses UTC. You can select any installed IANA timezone; `tzdata` is included for Windows.
 
 ### Enable editing with Google
 
@@ -79,7 +82,7 @@ Create a Google OAuth **Web application** client, register `http://127.0.0.1:878
 python scripts/first_run.py --google-client-id "YOUR_CLIENT_ID.apps.googleusercontent.com" --editor "you@example.com"
 ```
 
-Use your actual verified Google account address. The browser sends Google's identity credential, the backend verifies it, and the SQLite allowlist controls editing. No Google client secret is required for this popup-based sign-in.
+Use your actual verified Google account address. The browser sends Google's identity credential, the backend verifies it, and the SQLite allowlist controls editing. No Google client secret is required for this popup-based sign-in. Local browser authentication uses the loopback origin; production authentication requires HTTPS.
 
 For a publicly hosted instance, configure a permitted HTTPS origin:
 
@@ -104,6 +107,20 @@ flowchart LR
 Authenticated changes are checked server-side, written to SQLite, then announced over Server-Sent Events. Clients reconcile their state after reconnecting. Displays stay read-only; no admin login is required on a TV.
 
 See the [architecture map](docs/architecture.mermaid) for selected code owners and dependency paths.
+
+## Multiple screens
+
+By default, a TV shows items assigned to channel `general`. To display another set of announcements on a different screen, open a URL such as:
+
+```text
+http://127.0.0.1:8787/?channel=lobby
+```
+
+An Editor can set each task's **Screen channel** to `lobby`, `staff-room` or another short lowercase slug. This does not require setting up a separate database or server. The currently selected weekday is still global; independent day/channel schedules are not implemented. Channel selection is a display filter, **not an access-control boundary**, because the public API is readable.
+
+## Scheduled display windows
+
+In the task editor, leave the optional visibility fields empty to display a pending item immediately. Specify a **Show from** time to publish later and/or a **Show until** time to remove it from the TV automatically. These times are separate from the task's completion deadline. The task and its history remain in SQLite.
 
 ## Branding without editing source
 
@@ -139,8 +156,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and checks, [testin
 
 ## Roadmap
 
-- **Next:** recurring weekday announcements, visibility start/end windows, draft/preview/publish.
-- **Afterward:** independent display channels, playlists, per-screen content selection, richer searchable history.
+- **Next:** recurring weekday announcements, draft/preview/publish and independent per-screen content.
+- **Afterward:** screen playlists, independent per-screen weekday selection, richer searchable history.
 - **Longer term:** offline player behavior, device health, media processing and advanced roles.
 
 These are proposals, **not shipped features**. See [requirements](docs/REQUIREMENTS.md).
