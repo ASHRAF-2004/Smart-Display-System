@@ -13,7 +13,7 @@ Self-hosted digital signage for offices, schools, labs and shared spaces. Publis
 </div>
 
 > [!IMPORTANT]
-> The repository is a **normal, brand-neutral application**, not a GitHub template feature. Clone it, provide your own name/logo and staff accounts, and run your own instance. Screenshots, organizational identities and deployment credentials from the original installation are not included in the current source tree.
+> **Your screens, your identity.** Start with an empty board and a neutral logo placeholder. Choose a display name, authorize your Editors, then publish your own announcements. No sample employees, hard-coded company domain or bundled business data.
 
 ## Why use it?
 

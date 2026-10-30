@@ -74,6 +74,8 @@ window.staffAuth = {role:'viewer'};
         const t=translations[currentLang] || translations.en;
         safeSetText('tv-day-title', `${t.tvDayTitlePrefix}${t.days[currentDayIndex]}`);
         safeSetText('tv-ticker-text',tickerText);
+        if (el('tv-ticker-bar')) el('tv-ticker-bar').style.display=String(tickerText||'').trim()?'':'none';
+        safeSetText('txt-tv-status-bar', 'TV display preview · Channel: '+displayChannel);
         const box=el('tv-tasks-container');
         if (!box) return;
         if (currentView !== 'tv') { box.querySelectorAll('video').forEach(v=>v.pause()); return; }

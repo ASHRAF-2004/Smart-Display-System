@@ -33,7 +33,7 @@ DEFAULT_TASKS = {day: [] for day in DAYS}
 DEFAULT_SETTINGS = {
     "directives": [],
     "supervisors": [],
-    "tickerText": "Welcome! Add announcements in the Admin Panel.",
+    "tickerText": "",
     "customLogoUrl": None,
     "selectedDay": "Monday",
 }

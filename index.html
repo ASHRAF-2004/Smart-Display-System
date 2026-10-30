@@ -392,7 +392,7 @@
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                       <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                     </span>
-                    <span id="txt-tv-status-bar">TV Broadcast Active | 1080p Screen Simulation for Main Display</span>
+                    <span id="txt-tv-status-bar">TV display preview</span>
                 </span>
                 
                 <div class="tv-status-actions flex items-center gap-2">
@@ -407,7 +407,7 @@
                 </div>
             </div>
              
-            <!-- Simulated TV Frame -->
+            <!-- Browser TV Display -->
             <div id="tv-display-frame" class="tv-display-frame bg-slate-100 dark:bg-slate-950 border-4 border-[#381565] rounded-2xl shadow-2xl overflow-hidden relative text-slate-900 dark:text-slate-100">
                 
                 <!-- TV Header -->
@@ -418,7 +418,7 @@
                             <img id="tv-custom-logo-img" class="h-9 w-auto hidden object-contain" alt="Custom Logo" onerror="resetDefaultLogo()">
                         </div>
                         <div>
-                            <h2 id="tv-day-title" class="text-2xl font-black text-white">Today's Schedule - Saturday</h2>
+                            <h2 id="tv-day-title" class="text-2xl font-black text-white">Schedule - Saturday</h2>
                             <p id="tv-dept-sub" class="text-amber-200/90 text-xs mt-0.5">Shared announcements and tasks</p>
                         </div>
                     </div>
@@ -431,13 +431,13 @@
                 </div>
 
                 <!-- Ticker Banner -->
-                <div class="bg-[#f2b629] text-[#210b3e] font-bold px-4 py-2 flex items-center gap-3 border-b border-amber-500 shadow-inner">
+                <div id="tv-ticker-bar" class="bg-[#f2b629] text-[#210b3e] font-bold px-4 py-2 flex items-center gap-3 border-b border-amber-500 shadow-inner" style="display:none">
                     <span class="bg-[#381565] text-white text-xs px-3 py-1 rounded-md font-black shrink-0 flex items-center gap-1.5 shadow">
                         <i class="fa-solid fa-bullhorn text-[#f2b629]"></i>
-                        <span id="txt-ticker-badge">URGENT ANNOUNCEMENT</span>
+                        <span id="txt-ticker-badge">ANNOUNCEMENT</span>
                     </span>
                     <div class="overflow-hidden relative w-full text-xs md:text-sm font-extrabold">
-                        <span id="tv-ticker-text" class="inline-block">Welcome! Add announcements in the Admin Panel.</span>
+                        <span id="tv-ticker-text" class="inline-block"></span>
                     </div>
                 </div>
 
@@ -476,7 +476,7 @@
                         <span><i class="fa-solid fa-arrows-rotate text-purple-600 dark:text-purple-400"></i> <span id="txt-footer-sync">Auto-Sync Active</span></span>
                     </div>
                     <div>
-                        <span class="text-[#381565] dark:text-purple-300 font-bold">SMART DISPLAY Smart Display System v3.5</span>
+                        <span class="text-[#381565] dark:text-purple-300 font-bold">Smart Display System</span>
                     </div>
                 </div>
 
@@ -660,7 +660,7 @@
                                     <span id="txt-edit-ticker-heading">Edit Moving Ticker</span>
                                 </h4>
                                 <div class="flex gap-2">
-                                    <input type="text" id="admin-ticker-input" value="Welcome! Add announcements in the Admin Panel." class="flex-grow bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none">
+                                    <input type="text" id="admin-ticker-input" value="Add your own announcement in the Admin Panel." class="flex-grow bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none">
                                     <button onclick="updateTickerText()" class="bg-[#381565] hover:bg-purple-800 text-white font-black px-4 py-2 rounded-xl text-xs shrink-0 cursor-pointer shadow">
                                         <span id="btn-update-ticker">Update Ticker</span>
                                     </button>
@@ -764,7 +764,7 @@
         let selectedOperationalDay = TASK_DAYS[currentDayIndex];
         let customLogoUrl = null;
         let tempTaskImageUrl = null;
-        let tickerText = 'Welcome! Add announcements in the Admin Panel.';
+        let tickerText = '';
         let mobileNavigationOpen = false;
         let mobileNavigationReturnFocus = null;
         let tvPresentationActive = false;
@@ -854,10 +854,10 @@
                 tabSheets: "Google Sheets Sync",
                 enterFullscreen: "Full Screen",
                 exitFullscreen: "Exit Full Screen",
-                tvStatusBar: "TV Broadcast Active | 1080p Screen Simulation for Main Display",
-                tvDayTitlePrefix: "Today's Schedule - ",
+                tvStatusBar: "TV display preview",
+                tvDayTitlePrefix: "Schedule - ",
                 tvDeptSub: "Shared announcements and tasks",
-                tickerBadge: "URGENT ANNOUNCEMENT",
+                tickerBadge: "ANNOUNCEMENT",
                 tasksHeader: "Scheduled Tasks & Duties",
                 directivesTitle: "Compliance Directives",
                 supervisorsTitle: "Supervisors On Duty",
