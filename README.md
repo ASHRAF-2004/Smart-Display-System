@@ -46,7 +46,7 @@ No separate database server, no mandatory container platform, and no paid cloud 
 | Per-screen playlists and remote fleet monitoring | Planned |
 | Offline signage playback | Planned |
 
-Existing and future requirements are tracked separately in [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md). Do not confuse a task's **due date** with when an announcement disappears: a visibility end-time can now hide a notice from the TV without deleting its task record. Recurring tasks and per-display playlists remain unimplemented.
+Existing and future requirements are tracked separately in [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md). For comparisons with established digital-signage projects and prioritized gaps, see the [landscape analysis](docs/COMPARISON.md). Do not confuse a task's **due date** with when an announcement disappears: a visibility end-time can now hide a notice from the TV without deleting its task record. Recurring tasks and per-display playlists remain unimplemented.
 
 ## Quick start
 
