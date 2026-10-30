@@ -2,7 +2,7 @@
 
 1. Install Python 3.11+.
 2. Clone the repository, create a virtual environment and install `requirements.txt`.
-3. Run `python scripts/first_run.py --site-name "My Display"`.
+3. Run `python scripts/first_run.py --site-name "My Display" --timezone "Europe/London"`.
 4. Start `python app.py --port 8787`.
 5. Open `http://127.0.0.1:8787/` for the public read-only view.
 
@@ -24,4 +24,4 @@ The application itself stays bound to `127.0.0.1:8787` and should be placed behi
 
 **Application name:** rerun `first_run.py --site-name "New name"`. The title is stored privately in `.data/site-config.json`.
 
-**Current limitations:** the timezone is Asia/Kuala_Lumpur, selected weekday is global, and recurring items / scheduled expiration are not implemented. See [requirements](REQUIREMENTS.md).
+**Current limitations:** selected weekday is global, not per screen; recurrence and independent screen playlists are not implemented. Optional visibility start/end dates are available, independent of task deadlines. Display scheduling is not a privacy boundary. See [requirements](REQUIREMENTS.md).

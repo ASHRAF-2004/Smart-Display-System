@@ -39,7 +39,7 @@ def migrate(app):
     with app.db() as conn:
         assert conn.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
         conn.execute('BEGIN IMMEDIATE')
-        for name in ('deadline_utc', 'created_by', 'updated_by'):
+        for name in ('deadline_utc', 'created_by', 'updated_by', 'visible_from_utc', 'visible_until_utc'):
             if name not in {r['name'] for r in conn.execute('PRAGMA table_info(tasks)')}:
                 conn.execute(f'ALTER TABLE tasks ADD COLUMN {name} TEXT')
         statements = [
@@ -187,15 +187,41 @@ def deadline(value, old=None):
                 raise ValueError()
             normalized = dt.astimezone(timezone.utc).isoformat()
         except (TypeError, ValueError, AttributeError):
-            raise Problem(400, 'invalid_deadline', 'Choose a valid deadline date and time in Malaysia time.')
+            raise Problem(400, 'invalid_deadline', 'Choose a valid deadline date and time.')
     changed = normalized != previous
     reopened = old and old['status'] == 'completed' and status == 'pending'
     if status != 'completed' and (not old or changed or reopened):
         if not normalized or datetime.fromisoformat(normalized) <= datetime.now(timezone.utc):
-            raise Problem(400, 'deadline_in_past', 'Deadline must be in the future using Asia/Kuala_Lumpur time.')
+            raise Problem(400, 'deadline_in_past', 'Deadline must be in the future.')
     if 'deadlineUtc' in value or not old:
         value['deadlineUtc'] = normalized
     return value
+
+def visibility(value, old=None):
+    """Validate optional UTC visibility bounds, independent from a task deadline."""
+    def normalize(raw):
+        if raw in (None, ''):
+            return None
+        if not isinstance(raw, str) or len(raw) > 50:
+            raise Problem(400, 'invalid_visibility', 'Use valid UTC visibility dates.')
+        try:
+            timestamp = datetime.fromisoformat(raw.replace('Z', '+00:00'))
+            if timestamp.tzinfo is None:
+                raise ValueError()
+            return timestamp.astimezone(timezone.utc).isoformat()
+        except (ValueError, TypeError):
+            raise Problem(400, 'invalid_visibility', 'Use valid UTC visibility dates.')
+
+    from_date = normalize(value.get('visibleFromUtc', old['visible_from_utc'] if old else None))
+    until_date = normalize(value.get('visibleUntilUtc', old['visible_until_utc'] if old else None))
+    if from_date and until_date and datetime.fromisoformat(from_date) >= datetime.fromisoformat(until_date):
+        raise Problem(400, 'invalid_visibility', 'Visibility end must be after visibility start.')
+    if 'visibleFromUtc' in value or not old:
+        value['visibleFromUtc'] = from_date
+    if 'visibleUntilUtc' in value or not old:
+        value['visibleUntilUtc'] = until_date
+    return value
+
 
 def validate_media(data, filename, mime):
     if not filename or '/' in filename or '\\' in filename or '\x00' in filename or len(filename) > 180:

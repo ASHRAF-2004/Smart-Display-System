@@ -225,3 +225,8 @@ html[data-role="editor"] .viewer-only { display:none!important; }
 }
 @media(max-width:380px) { .form-pair { grid-template-columns:1fr; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; transition:none!important; animation:none!important; } .ticker-animate { animation:none; } }
+
+/* Distinct display-visibility scheduling, independent of task deadlines. */
+.visibility-fieldset {min-width:0;display:grid;gap:12px;border:1px solid var(--app-border);border-radius:12px;padding:14px;}
+.visibility-fieldset legend {padding-inline:6px;font-weight:800;}
+.visibility-fieldset .form-pair {min-width:0;}

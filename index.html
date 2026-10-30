@@ -2173,6 +2173,7 @@
                     safeSetText('txt-app-title', data.siteName);
                     document.title = data.siteName;
                 }
+                if (typeof data.timeZone === 'string' && data.timeZone.trim()) window.displayTimeZone=data.timeZone;
                 if (Object.prototype.hasOwnProperty.call(data, 'directives')) directivesData = Array.isArray(data.directives) ? data.directives : [];
                 if (Object.prototype.hasOwnProperty.call(data, 'supervisors')) supervisorsData = Array.isArray(data.supervisors) ? data.supervisors : [];
                 if (Object.prototype.hasOwnProperty.call(data, 'tickerText')) tickerText = typeof data.tickerText === 'string' ? data.tickerText : '';

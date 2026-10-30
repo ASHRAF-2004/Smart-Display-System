@@ -20,6 +20,8 @@ This document separates current application behavior from new requirements. Only
 | E12 | Global selected weekday is shared | Two connected displays |
 | E13 | Day/Night preference is browser-local | Two browsers use different themes |
 | E14 | Responsive and fullscreen TV views | Mobile/tablet/TV screen sizes |
+| E15 | Task visibility has optional start/end UTC windows | Future/active/expired items in TV |
+| E16 | Instance timezone is configurable (IANA) | UTC and DST-zone setup, UI conversion |
 
 ## New requirements
 
@@ -42,12 +44,12 @@ This document separates current application behavior from new requirements. Only
 | ID | Requirement | Definition of done |
 |---|---|---|
 | N10 | Recurring weekday rules | Mon–Fri time rule, occurrence-specific completion |
-| N11 | Separate visibility start/end from due date | Hide expired announcement without losing history |
+| N11 | Scheduled visibility windows and due dates | Implemented in E15; retain as a regression requirement |
 | N12 | Independent displays/channels | TV A and TV B can show different boards |
 | N13 | Draft/preview/publish | Draft items never appear on public screens |
 | N14 | Configurable display parameters | Rotation seconds, language, density by screen |
 | N15 | Archive/search/filter | History remains accessible and manageable |
-| N16 | Timezone configuration | Remove hardcoded Malaysia timezone throughout stack |
+| N16 | Timezone configuration | Implemented in E16; verify DST boundaries on a browser |
 | N17 | Screenshot/visual regression coverage | Reproducible browser acceptance on PRs |
 
 ### P2: Optional advanced capabilities
@@ -67,4 +69,5 @@ This document separates current application behavior from new requirements. Only
 - **Selected weekday** is global, **not** a per-TV channel.
 - **Recurrence** is not implemented.
 - **Viewer** is publicly readable; deployers are responsible for access restrictions if task content is private.
-- **Time zone** currently uses `Asia/Kuala_Lumpur`; per-installation timezone is a future requirement.
+- **Time zone** is configurable per installation and defaults to UTC; DST-boundary browser testing is part of release verification.
+- **Visibility scheduling** controls which items appear on the TV. Public `/api/state` may still include future item content, so scheduling is **not** a privacy boundary.

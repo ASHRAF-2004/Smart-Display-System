@@ -6,14 +6,42 @@ window.staffAuth = {role:'viewer'};
     const editor = () => window.staffAuth.role === 'editor';
     let serverOffset = 0;
     const serverNow = () => Date.now() + serverOffset;
-    const malaysiaParts = date => Object.fromEntries(new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date).map(p=>[p.type,p.value]));
+    const siteTimeZone = () => window.displayTimeZone || 'UTC';
+    const zoneParts = date => Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:siteTimeZone(),year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date).map(p=>[p.type,p.value]));
     const inputsFor = iso => {
         if (!iso) return ['', ''];
-        const p = malaysiaParts(new Date(iso));
+        const p=zoneParts(new Date(iso));
         return [`${p.year}-${p.month}-${p.day}`, `${p.hour}:${p.minute}`];
     };
+    const zoneOffset = utcMillis => {
+        const zone=new Intl.DateTimeFormat('en-US',{timeZone:siteTimeZone(),timeZoneName:'longOffset'}).formatToParts(new Date(utcMillis)).find(p=>p.type==='timeZoneName')?.value || 'GMT';
+        if(zone==='GMT'||zone==='UTC') return 0;
+        const m=/GMT([+-])(\d{1,2})(?::?(\d{2}))?$/.exec(zone);
+        if(!m) throw Error('Unsupported display timezone offset');
+        return (m[1]==='-'?-1:1)*(Number(m[2])*60+Number(m[3]||0));
+    };
+    // Convert a wall-clock value in the instance timezone to UTC, rejecting DST gaps.
+    const zonedIso = (date,time) => {
+        if(!date&&!time) return null;
+        if(!date||!time||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time)) return 'invalid';
+        const naive=Date.parse(`${date}T${time}:00Z`);
+        if(!Number.isFinite(naive)) return 'invalid';
+        let utc=naive;
+        for(let i=0;i<5;i++){
+            const next=naive-zoneOffset(utc)*60000;
+            if(next===utc)break;
+            utc=next;
+        }
+        const p=zoneParts(new Date(utc));
+        return `${p.year}-${p.month}-${p.day}`===date&&`${p.hour}:${p.minute}`===time ? new Date(utc).toISOString() : 'invalid';
+    };
+    const activeOnScreen = task => {
+        const now=serverNow();
+        return (!task.visibleFromUtc || Date.parse(task.visibleFromUtc)<=now)
+            && (!task.visibleUntilUtc || Date.parse(task.visibleUntilUtc)>now);
+    };
     const overdue = task => task.status !== 'completed' && task.deadlineUtc && Date.parse(task.deadlineUtc) < serverNow();
-    const deadlineLabel = task => task.deadlineUtc ? new Intl.DateTimeFormat('en-MY',{timeZone:'Asia/Kuala_Lumpur',day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(task.deadlineUtc)) + ' MYT' : task.time || '';
+    const deadlineLabel = task => task.deadlineUtc ? new Intl.DateTimeFormat('en-US',{timeZone:siteTimeZone(),day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(task.deadlineUtc)) + ' ('+siteTimeZone()+')' : task.time || '';
     const safeImage = url => /^(?:\/api\/media\/[a-f0-9]{32}|https:\/\/|data:image\/(?:png|jpeg|webp|gif);base64,)/i.test(url || '') ? url : '';
     const mediaMarkup = (task, tv=false) => {
         if (task.media?.mimeType?.startsWith('video/')) return `<video src="${esc(task.media.url)}" ${tv?'autoplay muted loop playsinline':'controls playsinline'} preload="metadata" ${tv?'':'class="task-thumbnail"'} aria-label="${esc(task.title)} video"></video>`;
@@ -47,7 +75,7 @@ window.staffAuth = {role:'viewer'};
         const box=el('tv-tasks-container');
         if (!box) return;
         if (currentView !== 'tv') { box.querySelectorAll('video').forEach(v=>v.pause()); return; }
-        const tasks=(tasksData[selectedOperationalDay] || []).filter(t=>t.status!=='completed');
+        const tasks=(tasksData[selectedOperationalDay] || []).filter(t=>t.status!=='completed' && activeOnScreen(t));
         if (tvDay !== selectedOperationalDay) { tvDay=selectedOperationalDay; tvPage=0; }
         const width=box.clientWidth || 1000, height=box.clientHeight || 400;
         const maxCols=width>=1300?3:width>=650?2:1;
@@ -79,7 +107,7 @@ window.staffAuth = {role:'viewer'};
         const list=el('admin-tasks-list');
         if (!list || currentView!=='admin') return;
         const tasks=tasksData[selectedOperationalDay] || [];
-        list.innerHTML=tasks.length?tasks.map(task=>`<article class="task-row" data-task-id="${task.id}">${mediaMarkup(task)}<div class="task-row-content"><h4>${esc(task.title)}</h4><p class="yu-muted">${esc(task.dept)} · ${esc(task.priority)}</p><p>${esc(task.desc)}</p><p class="${overdue(task)?'yu-overdue':'yu-muted'}">${overdue(task)?'Overdue · ':''}${esc(deadlineLabel(task))}</p><span class="yu-muted">${task.status==='completed'?'Completed':'Pending'}</span></div>${editor()?`<div class="task-row-actions"><button class="yu-button" data-edit="${task.id}">Edit</button><button class="yu-button" data-status="${task.id}">${task.status==='completed'?'Reopen':'Complete'}</button><button class="yu-button yu-danger" data-delete="${task.id}" aria-label="Delete ${esc(task.title)}">Delete</button></div>`:''}</article>`).join(''):'<p class="yu-muted">No tasks for this day.</p>';
+        list.innerHTML=tasks.length?tasks.map(task=>`<article class="task-row" data-task-id="${task.id}">${mediaMarkup(task)}<div class="task-row-content"><h4>${esc(task.title)}</h4><p class="yu-muted">${esc(task.dept)} · ${esc(task.priority)}</p><p>${esc(task.desc)}</p><p class="${overdue(task)?'yu-overdue':'yu-muted'}">${overdue(task)?'Overdue · ':''}${esc(deadlineLabel(task))}</p><span class="yu-muted">${task.status==='completed'?'Completed':(!activeOnScreen(task)?(task.visibleFromUtc&&Date.parse(task.visibleFromUtc)>serverNow()?'Scheduled':'Off screen'):'Pending')}</span></div>${editor()?`<div class="task-row-actions"><button class="yu-button" data-edit="${task.id}">Edit</button><button class="yu-button" data-status="${task.id}">${task.status==='completed'?'Reopen':'Complete'}</button><button class="yu-button yu-danger" data-delete="${task.id}" aria-label="Delete ${esc(task.title)}">Delete</button></div>`:''}</article>`).join(''):'<p class="yu-muted">No tasks for this day.</p>';
         list.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openTaskEditor(Number(b.dataset.edit)));
         list.querySelectorAll('[data-status]').forEach(b=>b.onclick=async()=>{
             const task=canonicalTaskState.get(b.dataset.status);
@@ -210,8 +238,7 @@ window.staffAuth = {role:'viewer'};
             const [oldDate,oldTime]=inputsFor(originalTask.deadlineUtc);
             if(date===oldDate&&time===oldTime) return originalTask.deadlineUtc;
         }
-        const value=new Date(`${date}T${time}:00+08:00`);
-        return Number.isNaN(value.getTime())?'invalid':value.toISOString();
+        return zonedIso(date,time);
     }
     function validateDeadline(focus=false) {
         const value=deadlineValue(), active=el('edit-status').value!=='completed';
@@ -221,10 +248,21 @@ window.staffAuth = {role:'viewer'};
         const parts=inputsFor(new Date(serverNow()+60000).toISOString());
         el('edit-date').min=active&&!historical?parts[0]:'';
         el('edit-time').min=active&&!historical&&el('edit-date').value===parts[0]?parts[1]:'';
-        const message=valid?'':'Deadline must be in the future using Malaysia time.';
+        const message=valid?'':'Deadline must be in the future using '+siteTimeZone()+'.';
         safeSetText('deadline-error',message);
         el('edit-date').setAttribute('aria-invalid',String(!valid)); el('edit-time').setAttribute('aria-invalid',String(!valid));
         if(!valid&&focus) el(!el('edit-date').value?'edit-date':'edit-time').focus();
+        return valid;
+    }
+    function visibilityValue(prefix) {
+        const date=el(prefix+'-date').value,time=el(prefix+'-time').value;
+        return zonedIso(date,time);
+    }
+    function validateVisibility(focus=false) {
+        const start=visibilityValue('visible-from'),end=visibilityValue('visible-until');
+        const valid=start!=='invalid' && end!=='invalid' && (!start||!end||Date.parse(start)<Date.parse(end));
+        safeSetText('visibility-error',valid?'':'Use complete visibility dates; the end must be after the start in '+siteTimeZone()+'.');
+        if(!valid&&focus)el('visible-from-date').focus();
         return valid;
     }
     window.openTaskEditor=function(id=null) {
@@ -237,6 +275,12 @@ window.staffAuth = {role:'viewer'};
         const task=originalTask||{day:selectedOperationalDay,dept:'General',priority:'Normal',status:'pending'};
         for(const [field,key] of [['title','title'],['desc','desc'],['day','day'],['dept','dept'],['priority','priority'],['status','status'],['schedule','time']]) el('edit-'+field).value=task[key]||'';
         const [date,time]=inputsFor(task.deadlineUtc);el('edit-date').value=date;el('edit-time').value=time;
+        for(const [prefix,iso] of [['visible-from',task.visibleFromUtc],['visible-until',task.visibleUntilUtc]]){
+            const parts=inputsFor(iso);el(prefix+'-date').value=parts[0];el(prefix+'-time').value=parts[1];
+        }
+        safeSetText('deadline-zone','All dates in '+siteTimeZone());
+        safeSetText('visibility-zone','Optional display window · '+siteTimeZone());
+        safeSetText('visibility-error','');
         preview(task); validateDeadline(); el('task-editor').showModal(); el('edit-title').focus();
     };
     function uploadMedia(taskId,file) {
@@ -251,12 +295,12 @@ window.staffAuth = {role:'viewer'};
         });
     }
     async function saveTask(event) {
-        event.preventDefault(); if(saving||!editor()||!validateDeadline(true)) return;
+        event.preventDefault(); if(saving||!editor()||!validateDeadline(true)||!validateVisibility(true)) return;
         if(!el('task-editor-form').reportValidity()) return;
         saving=true;el('edit-save').disabled=true;el('edit-cancel').disabled=true;el('edit-close').disabled=true;
         safeSetText('edit-error','');safeSetText('edit-save','Saving…');
         try {
-            const payload={title:el('edit-title').value.trim(),desc:el('edit-desc').value.trim(),day:el('edit-day').value,dept:el('edit-dept').value.trim(),priority:el('edit-priority').value,status:el('edit-status').value,time:el('edit-schedule').value.trim(),deadlineUtc:deadlineValue()};
+            const payload={title:el('edit-title').value.trim(),desc:el('edit-desc').value.trim(),day:el('edit-day').value,dept:el('edit-dept').value.trim(),priority:el('edit-priority').value,status:el('edit-status').value,time:el('edit-schedule').value.trim(),deadlineUtc:deadlineValue(),visibleFromUtc:visibilityValue('visible-from'),visibleUntilUtc:visibilityValue('visible-until')};
             if(originalTask && !payload.deadlineUtc && !originalTask.deadlineUtc) delete payload.deadlineUtc;
             const data=await smartdisplayApi(editingId?`/api/tasks/${editingId}`:'/api/tasks',{method:editingId?'PATCH':'POST',body:JSON.stringify(payload)});
             acceptCommittedChange(data);editingId=data.task.id;originalTask=data.task;
@@ -297,9 +341,13 @@ window.staffAuth = {role:'viewer'};
             <div class="form-heading"><h2 id="task-editor-title">Edit Task</h2><button type="button" id="edit-close" class="yu-button" aria-label="Close task editor"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
             <label>Task title<input id="edit-title" required maxlength="2000" autocomplete="off"></label>
             <label>Description<textarea id="edit-desc" rows="3" maxlength="2000"></textarea></label>
-            <div class="form-pair"><label>Weekday<select id="edit-day">${TASK_DAYS.map(d=>`<option>${d}</option>`).join('')}</select></label><label>Department<input id="edit-dept" required maxlength="2000" list="department-options"><datalist id="department-options"><option>General Office</option><option>Sales Dept</option><option>Preparation Dept</option><option>Human Resources HR</option></datalist></label></div>
+            <div class="form-pair"><label>Weekday<select id="edit-day">${TASK_DAYS.map(d=>`<option>${d}</option>`).join('')}</select></label><label>Department<input id="edit-dept" required maxlength="2000" list="department-options"><datalist id="department-options"><option>General</option><option>Operations</option><option>Facilities</option><option>People</option></datalist></label></div>
             <div class="form-pair"><label>Priority<select id="edit-priority"><option>Normal</option><option>Important</option><option>Urgent</option></select></label><label>Status<select id="edit-status"><option value="pending">Pending</option><option value="completed">Completed</option></select></label></div>
-            <div><div class="form-pair"><label><span><i class="fa-regular fa-calendar" aria-hidden="true"></i> Deadline date</span><input id="edit-date" type="date" aria-describedby="deadline-zone deadline-error"></label><label><span><i class="fa-regular fa-clock" aria-hidden="true"></i> Deadline time</span><input id="edit-time" type="time" aria-describedby="deadline-zone deadline-error"></label></div><p id="deadline-zone" class="yu-muted">Malaysia time · Asia/Kuala_Lumpur (UTC+8)</p><p id="deadline-error" class="yu-error" role="alert"></p></div>
+            <div><div class="form-pair"><label><span><i class="fa-regular fa-calendar" aria-hidden="true"></i> Deadline date</span><input id="edit-date" type="date" aria-describedby="deadline-zone deadline-error"></label><label><span><i class="fa-regular fa-clock" aria-hidden="true"></i> Deadline time</span><input id="edit-time" type="time" aria-describedby="deadline-zone deadline-error"></label></div><p id="deadline-zone" class="yu-muted">All dates in configured display timezone</p><p id="deadline-error" class="yu-error" role="alert"></p></div>
+            <fieldset class="visibility-fieldset"><legend>Show on display (optional)</legend><p class="yu-muted">Separate from the completion deadline. Leave empty to show immediately or indefinitely.</p>
+            <div class="form-pair"><label>Start date<input id="visible-from-date" type="date" aria-describedby="visibility-zone visibility-error"></label><label>Start time<input id="visible-from-time" type="time" aria-describedby="visibility-zone visibility-error"></label></div>
+            <div class="form-pair"><label>End date<input id="visible-until-date" type="date" aria-describedby="visibility-zone visibility-error"></label><label>End time<input id="visible-until-time" type="time" aria-describedby="visibility-zone visibility-error"></label></div>
+            <p id="visibility-zone" class="yu-muted">All dates in configured display timezone</p><p id="visibility-error" class="yu-error" role="alert"></p></fieldset>
             <label>Schedule note (optional)<input id="edit-schedule" maxlength="2000" placeholder="Existing schedule or time range"><span class="yu-muted">The deadline is set using the date and time pickers above.</span></label>
             <div id="edit-dropzone" class="media-picker"><label>Image or video<input id="edit-file" type="file" accept=".jpg,.jpeg,.png,.webp,.gif,.mp4,.webm"></label><p class="yu-muted">Choose a file or drop it here. JPG, PNG, WebP, GIF, MP4 or WebM · up to 25 MB.</p><div id="edit-media-preview"></div><p id="edit-media-info" class="yu-muted"></p><button type="button" id="edit-remove-media" class="yu-button yu-danger" hidden>Remove media</button><progress id="edit-upload-progress" max="100" value="0" aria-label="Media upload progress" hidden></progress></div>
             <p id="edit-error" class="yu-error" role="alert"></p><div class="form-actions"><button id="edit-cancel" class="yu-button" type="button">Cancel</button><button id="edit-save" class="yu-button yu-primary" type="submit">Save Changes</button></div>
@@ -307,17 +355,12 @@ window.staffAuth = {role:'viewer'};
         el('staff-sign-in').onclick=()=>prepareGoogleSignIn();
         el('staff-logout').onclick=async()=>{try{await smartdisplayApi('/api/auth/logout',{method:'POST',body:'{}'});googleRendered=false;await refreshStaffSession();showToast('Signed out. Public viewing remains available.');}catch(e){safeSetText('staff-error',e.message);}};
         el('task-editor-form').onsubmit=saveTask;
-        window.resetDefaultTasks=()=>{
-            if(!editor())return;
-            if(!el('reset-dialog'))document.body.insertAdjacentHTML('beforeend',`<dialog id="reset-dialog" class="task-dialog" aria-labelledby="reset-title"><form id="reset-form"><h2 id="reset-title">Restore default tasks</h2><p>This replaces all current tasks and removes their media. Choose a future Malaysia deadline for the restored tasks.</p><div class="form-pair"><label>Deadline date<input id="reset-date" type="date" required></label><label>Deadline time<input id="reset-time" type="time" required></label></div><p class="yu-muted">Asia/Kuala_Lumpur · UTC+8</p><p id="reset-error" class="yu-error" role="alert"></p><div class="form-actions"><button type="button" class="yu-button" onclick="document.getElementById('reset-dialog').close()">Cancel</button><button id="reset-submit" class="yu-button yu-danger">Replace all tasks</button></div></form></dialog>`);
-            el('reset-date').min=inputsFor(new Date(serverNow()).toISOString())[0];
-            el('reset-form').onsubmit=async e=>{e.preventDefault();const deadline=new Date(`${el('reset-date').value}T${el('reset-time').value}:00+08:00`);if(deadline.getTime()<=serverNow()){safeSetText('reset-error','Deadline must be in the future using Malaysia time.');return;}el('reset-submit').disabled=true;try{acceptCommittedChange(await smartdisplayApi('/api/tasks/reset',{method:'POST',body:JSON.stringify({deadlineUtc:deadline.toISOString()})}));el('reset-dialog').close();}catch(error){safeSetText('reset-error',error.message);}finally{el('reset-submit').disabled=false;}};
-            el('reset-dialog').showModal();
-        };
+        window.resetDefaultTasks=()=>showToast('Demo reset is not available. Your tasks are preserved.');
         el('edit-close').onclick=el('edit-cancel').onclick=()=>{if(!saving)el('task-editor').close();};
         el('task-editor').addEventListener('cancel',e=>{if(saving)e.preventDefault();});
         el('task-editor').addEventListener('close',()=>{if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;el('edit-media-preview').replaceChildren();returnFocus?.focus();});
         ['edit-date','edit-time','edit-status'].forEach(id=>el(id).addEventListener('input',()=>validateDeadline()));
+        ['visible-from-date','visible-from-time','visible-until-date','visible-until-time'].forEach(id=>el(id).addEventListener('input',()=>validateVisibility()));
         el('edit-file').onchange=e=>chooseFile(e.target.files[0]);
         el('edit-remove-media').onclick=()=>{selectedFile=null;removeMedia=true;el('edit-file').value='';preview();};
         const drop=el('edit-dropzone');

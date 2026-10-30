@@ -27,7 +27,7 @@ python -m compileall -q app.py security.py scripts tests
 python -m unittest discover -s tests -v
 ```
 
-For frontend changes, check the actual UI in a browser at mobile and TV sizes, both themes, and with 0/1/many items. For auth/security changes, run a real valid/invalid account flow on a **test instance**, not somebody else's production service.
+For frontend changes, check the actual UI in a browser at mobile and TV sizes, both themes, and with 0/1/many items. For scheduling changes, check a configured timezone and DST-boundary behavior. For auth/security changes, run a real valid/invalid account flow on a **test instance**, not somebody else's production service.
 
 See [testing](docs/testing.md) for the verification scope and limitations. Report what ran, what passed and any unavailable tests. Do not claim CI or production validation that you have not observed.
 
