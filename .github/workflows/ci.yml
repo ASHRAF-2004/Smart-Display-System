@@ -19,7 +19,9 @@ jobs:
       - name: Isolated smoke and integration tests
         run: python -m unittest discover -s tests -v
       - name: JavaScript syntax check
-        run: node --check upgrade.js
+        run: |
+          node --check upgrade.js
+          python scripts/check_inline_js.py
 
   browser:
     runs-on: ubuntu-latest
