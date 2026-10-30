@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>YOURUNI - Smart TV Broadcast & Task System</title>
+    <title>SMART DISPLAY - Smart TV Broadcast & Task System</title>
 
     <!-- Apply the browser-local global theme before styles load to avoid a light-page flash. -->
     <script>
         (() => {
             let theme = 'dark';
             try {
-                theme = localStorage.getItem('youruni_theme') === 'light' ? 'light' : 'dark';
+                theme = localStorage.getItem('smartdisplay_theme') === 'light' ? 'light' : 'dark';
             } catch (_) {
                 theme = 'dark';
             }
@@ -177,7 +177,7 @@
         }
         body.tv-presentation-active #app-header,
         body.tv-presentation-active #mobile-nav-layer,
-        body.tv-presentation-active #youruni-site-attribution,
+        body.tv-presentation-active #smartdisplay-site-attribution,
         body.tv-presentation-active #app-main > section:not(#view-tv) {
             display: none !important;
         }
@@ -257,7 +257,7 @@
             }
         }
 
-        #youruni-site-attribution {
+        #smartdisplay-site-attribution {
             flex: 0 0 auto;
             width: 100%;
             margin-top: 1.5rem;
@@ -283,25 +283,15 @@
             <!-- Logo & Title -->
             <div class="brand-lockup flex items-center gap-4">
                 <div id="main-logo-container" class="bg-white/10 px-3.5 py-1.5 rounded-xl border border-[#f2b629]/40 flex items-center shadow-lg min-h-[44px]">
-                    <svg id="default-logo-svg" class="h-7 w-auto" viewBox="0 0 330 65" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 8 L22 30 V54 H32 V30 L44 8 H32 L27 20 L22 8 H10 Z" fill="#f2b629"/>
-                        <path d="M68 8 C53 8 43 18 43 31 C43 44 53 54 68 54 C83 54 93 44 93 31 C93 18 83 8 68 18 Z M68 18 C76 18 82 23 82 31 C82 39 76 44 68 44 C60 44 54 39 54 31 C54 23 60 18 68 18 Z" fill="#f2b629"/>
-                        <path d="M100 8 V36 C100 42 105 45 112 45 C119 45 124 42 124 36 V8 H135 V36 C135 48 125 54 112 54 C99 54 89 48 89 36 V8 H100 Z" fill="#f2b629"/>
-                        <path d="M141 8 H166 C176 8 183 14 183 23 C183 29 178 34 171 36.5 L184 54 H172 L160 37 H152 V54 H141 V8 Z M152 17 V29 H165 C170 29 173 27 173 23 C173 19 170 17 165 17 H152 Z" fill="#f2b629"/>
-                        <path d="M152 38 C155 31 161 27 168 27 L180 27 M175 22 L182 27 L175 32" stroke="#f2b629" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M198 8 V36 C198 42 203 45 210 45 C217 45 222 42 222 36 V8 H233 V36 C233 48 223 54 210 54 C197 54 187 48 187 36 V8 H198 Z" fill="#ffffff"/>
-                        <path d="M239 8 L260 38 V8 H270 V54 L249 24 V54 H239 V8 Z" fill="#ffffff"/>
-                        <path d="M278 19 V54 H289 V19 H278 Z" fill="#ffffff"/>
-                        <circle cx="304" cy="12" r="5" fill="#f2b629"/>
-                    </svg>
+                    <svg id="default-logo-svg" class="h-7 w-auto" role="img" aria-label="Logo placeholder" viewBox="0 0 330 65" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="8" width="62" height="48" rx="12" fill="#55417A"/><rect x="14" y="19" width="38" height="25" rx="4" stroke="#FFFFFF" stroke-width="3"/><path d="M24 39L31 31L37 36L44 27" stroke="#FFD166" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="79" y="39" fill="#F0EAFB" font-size="25" font-family="Arial,sans-serif" font-weight="700">YOUR LOGO</text></svg>
                     <img id="custom-logo-img" class="h-8 w-auto hidden object-contain" alt="Custom Logo" onerror="resetDefaultLogo()">
                 </div>
                 <div>
                     <h1 class="text-base font-bold text-white leading-none flex items-center gap-2">
-                        <span id="txt-app-title">Smart Display Broadcast - Office 06-02</span>
+                        <span id="txt-app-title">Smart Display System</span>
                         <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] px-2 py-0.5 rounded-full font-extrabold">LIVE</span>
                     </h1>
-                    <p id="txt-app-subtitle" class="text-xs text-amber-200/90 mt-0.5">Central Task & Compliance Display System</p>
+                    <p id="txt-app-subtitle" class="text-xs text-amber-200/90 mt-0.5">Live tasks and announcements</p>
                 </div>
             </div>
 
@@ -327,7 +317,7 @@
                         <i class="fa-solid fa-tv text-brand-yellow"></i> <span id="txt-tab-tv">TV Display View</span>
                     </button>
                     <button id="btn-admin-view" onclick="switchView('admin')" class="app-nav-button flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white cursor-pointer">
-                        <i class="fa-solid fa-user-gear"></i> <span id="txt-tab-admin">Manager / HR Panel</span>
+                        <i class="fa-solid fa-user-gear"></i> <span id="txt-tab-admin">Admin Panel</span>
                     </button>
                     <button id="btn-sheets-view" onclick="switchView('sheets')" class="app-nav-button flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white cursor-pointer">
                         <i class="fa-solid fa-file-excel text-emerald-400"></i> <span id="txt-tab-sheets">Google Sheets Sync</span>
@@ -348,7 +338,7 @@
         <aside id="mobile-nav-drawer" class="mobile-nav-drawer" role="dialog" aria-modal="true" aria-label="Application navigation" tabindex="-1">
             <div class="mobile-drawer-heading">
                 <div>
-                    <p class="mobile-drawer-kicker">YOURUNI</p>
+                    <p class="mobile-drawer-kicker">SMART DISPLAY</p>
                     <h2>Display controls</h2>
                 </div>
                 <button type="button" class="mobile-drawer-close" onclick="closeMobileNavigation()" aria-label="Close navigation menu">
@@ -362,7 +352,7 @@
                     <i class="fa-solid fa-tv text-brand-yellow" aria-hidden="true"></i><span id="mobile-txt-tab-tv">TV Display View</span>
                 </button>
                 <button id="mobile-btn-admin-view" onclick="switchView('admin')" class="app-nav-button mobile-drawer-action">
-                    <i class="fa-solid fa-user-gear" aria-hidden="true"></i><span id="mobile-txt-tab-admin">Manager / HR Panel</span>
+                    <i class="fa-solid fa-user-gear" aria-hidden="true"></i><span id="mobile-txt-tab-admin">Admin Panel</span>
                 </button>
                 <button id="mobile-btn-sheets-view" onclick="switchView('sheets')" class="app-nav-button mobile-drawer-action">
                     <i class="fa-solid fa-file-excel text-emerald-400" aria-hidden="true"></i><span id="mobile-txt-tab-sheets">Google Sheets Sync</span>
@@ -402,7 +392,7 @@
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                       <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                     </span>
-                    <span id="txt-tv-status-bar">TV Broadcast Active | 1080p Screen Simulation for Office 06-02</span>
+                    <span id="txt-tv-status-bar">TV Broadcast Active | 1080p Screen Simulation for Main Display</span>
                 </span>
                 
                 <div class="tv-status-actions flex items-center gap-2">
@@ -424,22 +414,12 @@
                 <div id="tv-brand-bar" class="bg-gradient-to-r from-[#210b3e] via-[#381565] to-[#16072b] p-6 border-b border-purple-500/30 flex justify-between items-center text-white">
                     <div class="flex items-center gap-4">
                         <div id="tv-logo-container" class="bg-slate-950/90 p-2 rounded-xl border border-[#f2b629]/40 shadow-xl min-h-[48px] flex items-center">
-                            <svg id="tv-default-logo-svg" class="h-9 w-auto" viewBox="0 0 330 65" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M10 8 L22 30 V54 H32 V30 L44 8 H32 L27 20 L22 8 H10 Z" fill="#f2b629"/>
-                                <path d="M68 8 C53 8 43 18 43 31 C43 44 53 54 68 54 C83 54 93 44 93 31 C93 18 83 8 68 18 Z M68 18 C76 18 82 23 82 31 C82 39 76 44 68 44 C60 44 54 39 54 31 C54 23 60 18 68 18 Z" fill="#f2b629"/>
-                                <path d="M100 8 V36 C100 42 105 45 112 45 C119 45 124 42 124 36 V8 H135 V36 C135 48 125 54 112 54 C99 54 89 48 89 36 V8 H100 Z" fill="#f2b629"/>
-                                <path d="M141 8 H166 C176 8 183 14 183 23 C183 29 178 34 171 36.5 L184 54 H172 L160 37 H152 V54 H141 V8 Z M152 17 V29 H165 C170 29 173 27 173 23 C173 19 170 17 165 17 H152 Z" fill="#f2b629"/>
-                                <path d="M152 38 C155 31 161 27 168 27 L180 27 M175 22 L182 27 L175 32" stroke="#f2b629" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M198 8 V36 C198 42 203 45 210 45 C217 45 222 42 222 36 V8 H233 V36 C233 48 223 54 210 54 C197 54 187 48 187 36 V8 H198 Z" fill="#ffffff"/>
-                                <path d="M239 8 L260 38 V8 H270 V54 L249 24 V54 H239 V8 Z" fill="#ffffff"/>
-                                <path d="M278 19 V54 H289 V19 H278 Z" fill="#ffffff"/>
-                                <circle cx="304" cy="12" r="5" fill="#f2b629"/>
-                            </svg>
+                            <svg id="tv-default-logo-svg" class="h-7 w-auto" role="img" aria-label="Logo placeholder" viewBox="0 0 330 65" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="8" width="62" height="48" rx="12" fill="#55417A"/><rect x="14" y="19" width="38" height="25" rx="4" stroke="#FFFFFF" stroke-width="3"/><path d="M24 39L31 31L37 36L44 27" stroke="#FFD166" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="79" y="39" fill="#F0EAFB" font-size="25" font-family="Arial,sans-serif" font-weight="700">YOUR LOGO</text></svg>
                             <img id="tv-custom-logo-img" class="h-9 w-auto hidden object-contain" alt="Custom Logo" onerror="resetDefaultLogo()">
                         </div>
                         <div>
                             <h2 id="tv-day-title" class="text-2xl font-black text-white">Today's Schedule - Saturday</h2>
-                            <p id="tv-dept-sub" class="text-amber-200/90 text-xs mt-0.5">Sales, Preparation & HR Directives - Office 06-02</p>
+                            <p id="tv-dept-sub" class="text-amber-200/90 text-xs mt-0.5">Shared announcements and tasks</p>
                         </div>
                     </div>
 
@@ -457,7 +437,7 @@
                         <span id="txt-ticker-badge">URGENT ANNOUNCEMENT</span>
                     </span>
                     <div class="overflow-hidden relative w-full text-xs md:text-sm font-extrabold">
-                        <span id="tv-ticker-text" class="inline-block">HR Announcement: Please submit weekly performance reports before 4:00 PM today.</span>
+                        <span id="tv-ticker-text" class="inline-block">Welcome! Add announcements in the Admin Panel.</span>
                     </div>
                 </div>
 
@@ -492,11 +472,11 @@
                 <!-- TV Footer Bar -->
                 <div class="bg-slate-200 dark:bg-slate-900/90 border-t border-purple-900/30 px-6 py-2.5 flex justify-between items-center text-xs text-slate-600 dark:text-slate-400">
                     <div class="flex items-center gap-4">
-                        <span><i class="fa-solid fa-tv text-[#381565] dark:text-[#f2b629]"></i> <span id="txt-footer-screen">Screen: 06-02 TV</span></span>
+                        <span><i class="fa-solid fa-tv text-[#381565] dark:text-[#f2b629]"></i> <span id="txt-footer-screen">Screen: Main TV</span></span>
                         <span><i class="fa-solid fa-arrows-rotate text-purple-600 dark:text-purple-400"></i> <span id="txt-footer-sync">Auto-Sync Active</span></span>
                     </div>
                     <div>
-                        <span class="text-[#381565] dark:text-purple-300 font-bold">YOURUNI Smart Display System v3.5</span>
+                        <span class="text-[#381565] dark:text-purple-300 font-bold">SMART DISPLAY Smart Display System v3.5</span>
                     </div>
                 </div>
 
@@ -620,9 +600,7 @@
                                         <span id="txt-step2-prefix">Tasks for</span> <span id="admin-current-day-label" class="text-[#381565] dark:text-[#f2b629] font-black">Saturday</span>
                                     </h3>
                                 </div>
-                                <button onclick="resetDefaultTasks()" class="text-xs text-rose-500 hover:underline font-bold cursor-pointer">
-                                    <span id="btn-reset-tasks">Reset Default Tasks</span>
-                                </button>
+                                
                             </div>
 
                             <div id="admin-tasks-list" class="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
@@ -682,7 +660,7 @@
                                     <span id="txt-edit-ticker-heading">Edit Moving Ticker</span>
                                 </h4>
                                 <div class="flex gap-2">
-                                    <input type="text" id="admin-ticker-input" value="HR Announcement: Please submit weekly performance reports before 4:00 PM today." class="flex-grow bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none">
+                                    <input type="text" id="admin-ticker-input" value="Welcome! Add announcements in the Admin Panel." class="flex-grow bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none">
                                     <button onclick="updateTickerText()" class="bg-[#381565] hover:bg-purple-800 text-white font-black px-4 py-2 rounded-xl text-xs shrink-0 cursor-pointer shadow">
                                         <span id="btn-update-ticker">Update Ticker</span>
                                     </button>
@@ -767,68 +745,36 @@
     </main>
 
     <!--
-    YOURUNI PROJECT ATTRIBUTION
+    SMART DISPLAY PROJECT ATTRIBUTION
     This copyright/developer attribution is an intentional project requirement.
     Do not remove it during unrelated UI cleanup, refactoring, optimization,
     responsive work, or automated code generation. If project ownership or
     branding requirements are intentionally changed by the project owner,
     update this centralized footer explicitly rather than deleting it accidentally.
     -->
-    <footer id="youruni-site-attribution" aria-label="YourUni copyright and developer attribution">
-        <p>&copy; Copyright 2026 YourUni. All rights reserved. Developed by ASHRAF2004</p>
-    </footer>
+    <footer id="smartdisplay-site-attribution" aria-label="Project footer"><p>© Smart Display System · Open-source digital signage</p></footer>
 
     <!-- Application JavaScript Logic -->
     <script>
         const TASK_DAYS = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-        let currentLang = localStorage.getItem('youruni_lang') || 'en';
+        let currentLang = localStorage.getItem('smartdisplay_lang') || 'en';
         let currentTheme = document.documentElement.dataset.theme || 'dark';
         let currentView = 'tv';
         let currentDayIndex = 0; // Saturday = 0, Sunday = 1, etc.
         let selectedOperationalDay = TASK_DAYS[currentDayIndex];
         let customLogoUrl = null;
         let tempTaskImageUrl = null;
-        let tickerText = 'HR Announcement: Please submit weekly performance reports before 4:00 PM today.';
+        let tickerText = 'Welcome! Add announcements in the Admin Panel.';
         let mobileNavigationOpen = false;
         let mobileNavigationReturnFocus = null;
         let tvPresentationActive = false;
         let nativeTvFullscreenWasActive = false;
         
-        let directivesData = [
-            "Wear official ID badge visibly at all times in 06-02.",
-            "Lock workstations (Win + L) when stepping away.",
-            "Escort and register all office visitors at reception."
-        ];
+        let directivesData = [];
 
-        let supervisorsData = [
-            { title: "Sales Lead", name: "Mr. Hisham" },
-            { title: "HR Overseer", name: "Ms. Nurul" }
-        ];
+        let supervisorsData = [];
 
-        let defaultTasksStore = {
-            "Saturday": [
-                { id: 1, title: "Morning Sales Prep & Briefing", dept: "Sales Dept", priority: "Important", time: "09:00 AM - 10:00 AM", desc: "Review daily lead targets and team assignments", status: "completed", imageUrl: "" },
-                { id: 2, title: "Client Follow-up Calls", dept: "Sales Dept", priority: "Normal", time: "10:30 AM - 01:00 PM", desc: "Contact prospective applicants and complete inquiries", status: "pending", imageUrl: "" }
-            ],
-            "Sunday": [
-                { id: 3, title: "Weekly Planning & HR Review", dept: "Human Resources HR", priority: "Urgent", time: "09:30 AM - 11:30 AM", desc: "Review attendance and weekly task directives", status: "pending", imageUrl: "" }
-            ],
-            "Monday": [
-                { id: 4, title: "Student Document Verification", dept: "Preparation Dept", priority: "Important", time: "09:00 AM - 12:00 PM", desc: "Verify application files and submit reports", status: "pending", imageUrl: "" }
-            ],
-            "Tuesday": [
-                { id: 5, title: "Team Performance Alignment", dept: "General Office", priority: "Normal", time: "02:00 PM - 03:30 PM", desc: "Office 06-02 status sync with department leads", status: "pending", imageUrl: "" }
-            ],
-            "Wednesday": [
-                { id: 6, title: "Mid-week Target Review", dept: "Sales Dept", priority: "Important", time: "11:00 AM - 01:00 PM", desc: "Evaluate week targets and conversion ratios", status: "pending", imageUrl: "" }
-            ],
-            "Thursday": [
-                { id: 7, title: "Weekly Performance Reporting", dept: "General Office", priority: "Urgent", time: "02:00 PM - 04:00 PM", desc: "Submit weekly reports to HR before 4:00 PM", status: "pending", imageUrl: "" }
-            ],
-            "Friday": [
-                { id: 8, title: "Office Equipment & Workstation Audit", dept: "Preparation Dept", priority: "Normal", time: "03:00 PM - 05:00 PM", desc: "Ensure clean desk compliance across office desks", status: "pending", imageUrl: "" }
-            ]
-        };
+        let defaultTasksStore = Object.fromEntries(TASK_DAYS.map(day => [day, []]));
 
         class CanonicalTaskStore {
             constructor(days = TASK_DAYS) {
@@ -901,22 +847,22 @@
             en: {
                 dir: 'ltr',
                 days: ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-                appTitle: "Smart Display Broadcast - Office 06-02",
-                appSub: "Central Task & Compliance Display System",
+                appTitle: "Smart Display System",
+                appSub: "Live tasks and announcements",
                 tabTv: "TV Display View",
-                tabAdmin: "Manager / HR Panel",
+                tabAdmin: "Admin Panel",
                 tabSheets: "Google Sheets Sync",
                 enterFullscreen: "Full Screen",
                 exitFullscreen: "Exit Full Screen",
-                tvStatusBar: "TV Broadcast Active | 1080p Screen Simulation for Office 06-02",
+                tvStatusBar: "TV Broadcast Active | 1080p Screen Simulation for Main Display",
                 tvDayTitlePrefix: "Today's Schedule - ",
-                tvDeptSub: "Sales, Preparation & HR Directives - Office 06-02",
+                tvDeptSub: "Shared announcements and tasks",
                 tickerBadge: "URGENT ANNOUNCEMENT",
                 tasksHeader: "Scheduled Tasks & Duties",
                 directivesTitle: "Compliance Directives",
                 supervisorsTitle: "Supervisors On Duty",
                 progressLabel: "Daily Progress",
-                footerScreen: "Screen: 06-02 TV",
+                footerScreen: "Screen: Main TV",
                 footerSync: "Auto-Sync Active",
                 adminTitle: "Easy Control Panel",
                 adminDesc: "Easy way to add and manage tasks. Changes appear live on TV!",
@@ -946,11 +892,11 @@
                 taskDoneStatus: "✅ Completed",
                 taskPendingStatus: "⏳ Pending",
                 rolePlaceholder: "Role (e.g. Sales Lead)",
-                namePlaceholder: "Name (e.g. Mr. Hisham)",
+                namePlaceholder: "Name (e.g. Team Lead)",
                 deptOptions: [
-                    { value: "Sales Dept", text: "Sales Department" },
-                    { value: "Preparation Dept", text: "Preparation Department" },
-                    { value: "Human Resources HR", text: "Human Resources (HR)" },
+                    { value: "Operations", text: "Sales Department" },
+                    { value: "Facilities", text: "Preparation Department" },
+                    { value: "People", text: "Human Resources (HR)" },
                     { value: "General Office", text: "General Office" }
                 ],
                 priorityOptions: [
@@ -962,22 +908,22 @@
             ar: {
                 dir: 'rtl',
                 days: ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"],
-                appTitle: "شاشة العرض الذكية - مكتب 06-02",
+                appTitle: "شاشة العرض الذكية - مكتب Main",
                 appSub: "نظام بث المهام والالتزام التنظيمي المركزي",
                 tabTv: "واجهة عرض الشاشة TV",
                 tabAdmin: "لوحة التحكم المبسطة",
                 tabSheets: "مزامنة Google Sheets",
                 enterFullscreen: "ملء الشاشة",
                 exitFullscreen: "الخروج من ملء الشاشة",
-                tvStatusBar: "البث المباشر نشط | شاشة مكتب 06-02 بدقة 1080p",
+                tvStatusBar: "البث المباشر نشط | شاشة مكتب Main بدقة 1080p",
                 tvDayTitlePrefix: "جدول مهام اليوم - ",
-                tvDeptSub: "توجيهات قسم المبيعات والتحضير والموارد البشرية - مكتب 06-02",
+                tvDeptSub: "توجيهات قسم المبيعات والتحضير والموارد البشرية - مكتب Main",
                 tickerBadge: "تنبيه هام وعاجل",
                 tasksHeader: "قائمة المهام والواجبات اليومية",
                 directivesTitle: "تعليمات الالتزام والأنظمة",
                 supervisorsTitle: "المشرفون المسؤولون اليوم",
                 progressLabel: "معدل الإنجاز اليومي",
-                footerScreen: "الشاشة: 06-02 TV",
+                footerScreen: "الشاشة: Main TV",
                 footerSync: "المزامنة التلقائية نشطة",
                 adminTitle: "لوحة التحكم المبسطة",
                 adminDesc: "أسهل طريقة لإضافة وتعديل مهام الشاشة. التعديلات تظهر فوراً على التلفزيون!",
@@ -1009,9 +955,9 @@
                 rolePlaceholder: "الدور (مثال: مسؤول المبيعات)",
                 namePlaceholder: "الاسم (مثال: أ. هشام)",
                 deptOptions: [
-                    { value: "Sales Dept", text: "قسم المبيعات" },
-                    { value: "Preparation Dept", text: "قسم التحضير" },
-                    { value: "Human Resources HR", text: "الموارد البشرية (HR)" },
+                    { value: "Operations", text: "قسم المبيعات" },
+                    { value: "Facilities", text: "قسم التحضير" },
+                    { value: "People", text: "الموارد البشرية (HR)" },
                     { value: "General Office", text: "عام" }
                 ],
                 priorityOptions: [
@@ -1023,22 +969,22 @@
             ms: {
                 dir: 'ltr',
                 days: ["Sabtu", "Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat"],
-                appTitle: "Paparan Penyiaran Pintar - Pejabat 06-02",
+                appTitle: "Paparan Penyiaran Pintar - Pejabat Main",
                 appSub: "Sistem Paparan Tugasan & Kepatuhan Pusat",
                 tabTv: "Paparan Skrin TV",
                 tabAdmin: "Panel Kawalan Mudah",
                 tabSheets: "Integrasi Google Sheets",
                 enterFullscreen: "Skrin Penuh",
                 exitFullscreen: "Keluar Skrin Penuh",
-                tvStatusBar: "Siaran TV Aktif | Simulasi Skrin 1080p Pejabat 06-02",
+                tvStatusBar: "Siaran TV Aktif | Simulasi Skrin 1080p Pejabat Main",
                 tvDayTitlePrefix: "Jadual Hari Ini - ",
-                tvDeptSub: "Arahan Jualan, Penyediaan & HR - Pejabat 06-02",
+                tvDeptSub: "Arahan Jualan, Penyediaan & HR - Pejabat Main",
                 tickerBadge: "PENGUMUMAN SEGERA",
                 tasksHeader: "Tugasan & Kewajipan Dijadualkan",
                 directivesTitle: "Arahan Kepatuhan",
                 supervisorsTitle: "Penyelia Bertugas",
                 progressLabel: "Kemajuan Harian",
-                footerScreen: "Skrin: 06-02 TV",
+                footerScreen: "Skrin: Main TV",
                 footerSync: "Auto-Masa Aktif",
                 adminTitle: "Panel Kawalan Mudah",
                 adminDesc: "Cara mudah menambah dan mengurus tugasan. Perubahan disiarkan secara langsung!",
@@ -1070,9 +1016,9 @@
                 rolePlaceholder: "Peranan (Cth: Ketua Jualan)",
                 namePlaceholder: "Nama (Cth: En. Hisham)",
                 deptOptions: [
-                    { value: "Sales Dept", text: "Jabatan Jualan" },
-                    { value: "Preparation Dept", text: "Jabatan Penyediaan" },
-                    { value: "Human Resources HR", text: "Sumber Manusia (HR)" },
+                    { value: "Operations", text: "Jabatan Jualan" },
+                    { value: "Facilities", text: "Jabatan Penyediaan" },
+                    { value: "People", text: "Sumber Manusia (HR)" },
                     { value: "General Office", text: "Pejabat Am" }
                 ],
                 priorityOptions: [
@@ -1233,7 +1179,7 @@
             html.classList.toggle('dark', currentTheme === 'dark');
             html.style.colorScheme = currentTheme;
             if (persist) {
-                try { localStorage.setItem('youruni_theme', currentTheme); } catch (_) { /* UI still works without storage. */ }
+                try { localStorage.setItem('smartdisplay_theme', currentTheme); } catch (_) { /* UI still works without storage. */ }
             }
             const isDark = currentTheme === 'dark';
             ['theme-icon', 'mobile-theme-icon'].forEach(id => {
@@ -1259,7 +1205,7 @@
 
         function setLanguage(lang) {
             currentLang = lang;
-            localStorage.setItem('youruni_lang', lang);
+            localStorage.setItem('smartdisplay_lang', lang);
             const t = translations[lang] || translations['en'];
 
             const htmlRoot = document.getElementById('html-root');
@@ -2128,7 +2074,7 @@
                 bottom: max(0.875rem, env(safe-area-inset-bottom));
                 max-width: none;
             }
-            #youruni-site-attribution {
+            #smartdisplay-site-attribution {
                 margin-top: 0.75rem;
                 padding-left: 1rem;
                 padding-right: 1rem;
@@ -2223,6 +2169,10 @@
 
             const applySettings = data => {
                 if (!data || typeof data !== 'object') return;
+                if (typeof data.siteName === 'string' && data.siteName.trim()) {
+                    safeSetText('txt-app-title', data.siteName);
+                    document.title = data.siteName;
+                }
                 if (Object.prototype.hasOwnProperty.call(data, 'directives')) directivesData = Array.isArray(data.directives) ? data.directives : [];
                 if (Object.prototype.hasOwnProperty.call(data, 'supervisors')) supervisorsData = Array.isArray(data.supervisors) ? data.supervisors : [];
                 if (Object.prototype.hasOwnProperty.call(data, 'tickerText')) tickerText = typeof data.tickerText === 'string' ? data.tickerText : '';
@@ -2348,9 +2298,9 @@
                 }
             };
 
-            window.youruniApi = request;
+            window.smartdisplayApi = request;
             window.acceptCommittedChange = acceptBusinessEvent;
-            window.reconcileYouruni = reconcileAuthoritativeState;
+            window.reconcileSmart Display = reconcileAuthoritativeState;
             const saveSettings = async (successMessage) => {
                 const response = await request('/api/settings', {
                     method: 'PUT',

@@ -1,0 +1,27 @@
+flowchart TD
+  %% Selected runtime owners and major data flows; not a complete import graph.
+  subgraph Browsers["Browser clients"]
+    VIEW["Public viewer / TV<br/>HTML, JavaScript, CSS"]
+    ADMIN["Authorized editor<br/>Google sign-in"]
+  end
+  subgraph Application["Python application"]
+    HTTP["app.py<br/>HTTP routes + server"]
+    AUTH["security.py<br/>Google token, allowlist,<br/>sessions, CSRF"]
+    STATE["SQLite transactions<br/>tasks, settings, revisions"]
+    EVENTS["SSE broadcaster<br/>authoritative reconciliation"]
+    FILES["Validated local media"]
+  end
+  CONFIG["Private instance config<br/>.data/auth-config.json<br/>.data/site-config.json"]
+  GOOGLE["Google Identity Services"]
+  ADMIN --> GOOGLE
+  GOOGLE --> ADMIN
+  ADMIN --> HTTP
+  VIEW --> HTTP
+  HTTP --> AUTH
+  AUTH --> CONFIG
+  HTTP --> STATE
+  HTTP --> FILES
+  STATE --> EVENTS
+  EVENTS --> VIEW
+  EVENTS --> ADMIN
+  ADMIN -.->|"Set logo and tasks"| FILES

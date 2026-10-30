@@ -1,11 +1,7 @@
-# Branding and instance identity
+# Appearance and instance identity
 
-Smart Display System is intended to be **brand-neutral by default**.
+Smart Display System starts with **neutral sample-free content** and a `YOUR LOGO` placeholder. Each deployment can configure its own site title through `scripts/first_run.py --site-name` and upload an image through the Editor interface.
 
-A fresh instance should use a neutral placeholder logo and generic sample content, not an organization's logo, employee identities, private email addresses, domain, or office location. Administrators should be able to supply their own display name and logo without editing source code.
+A new installation has no default staff accounts, no company office number and no operational tasks. Runtime configuration and uploaded media must remain in ignored local directories. Never publish someone else's business data, screenshots, identities or tunnel credentials.
 
-Brand identity, authorized staff, public origins, time zone, and deployment paths must be configurable per installation. Credentials, runtime databases, and uploaded media belong in ignored local data directories and must never be copied from an existing organization into a published repository.
-
-The public repository is an installable application. It is **not** intended to be configured as GitHub's "Template repository" product. Reusable deployment and onboarding are application features, not repository metadata.
-
-See the conversion proposal in this branch for the implementation and remaining validation.
+The default palette is only a visual starting point. The product is an ordinary application that people can clone, install and customize.
