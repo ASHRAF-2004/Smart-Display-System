@@ -1680,8 +1680,8 @@
 
             function update() {
                 const now = new Date();
-                if (clockEl) clockEl.textContent = now.toLocaleTimeString('en-MY', {timeZone:'Asia/Kuala_Lumpur'});
-                if (dateEl) dateEl.textContent = now.toLocaleDateString('en-MY', { timeZone:'Asia/Kuala_Lumpur', weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+                if (clockEl) clockEl.textContent = now.toLocaleTimeString('en-US', {timeZone:window.displayTimeZone || 'UTC'});
+                if (dateEl) dateEl.textContent = now.toLocaleDateString('en-US', { timeZone:window.displayTimeZone || 'UTC', weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
             }
             update();
             setInterval(update, 1000);

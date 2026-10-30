@@ -10,6 +10,7 @@ Complete these checks **before** calling a new version production-ready.
 - [ ] Verify future display window, active display window and expired display window.
 - [ ] Verify deadline is independent of visibility end time.
 - [ ] Verify correct local timezone and a daylight-saving transition with a configured DST zone.
+- [ ] Verify different TVs with `?channel=general` and `?channel=lobby` show their assigned tasks.
 - [ ] Verify SSE reconnect, fullscreen TV and 0/1/many task layouts.
 - [ ] Verify read-only responses and direct API authorization denial.
 - [ ] Verify SQLite integrity and a full backup restore.

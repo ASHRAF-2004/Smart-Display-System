@@ -11,6 +11,6 @@ The [architecture.mermaid](architecture.mermaid) diagram shows selected componen
 - A task's optional visibility start/end timestamps are stored separately from its completion deadline. The client filters TV visibility without erasing database history.
 - The application binds to 127.0.0.1; exposing it externally requires a properly configured HTTPS proxy or tunnel.
 
-There is **one global selected weekday** and no independent screen playlists. Theme preference remains local to each browser.
+There is **one global selected weekday**. Each TV can select its own task channel using a URL parameter. Full independent playlists and per-screen weekday scheduling remain unimplemented. Theme preference remains local to each browser.
 
 This is an architectural overview, not a complete import or dependency inventory.

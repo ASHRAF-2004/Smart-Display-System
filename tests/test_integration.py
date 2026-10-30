@@ -102,6 +102,7 @@ class IsolatedInstance(unittest.TestCase):
             columns = {row[1] for row in database.execute("pragma table_info(tasks)")}
             self.assertIn("visible_from_utc", columns)
             self.assertIn("visible_until_utc", columns)
+            self.assertIn("channel", columns)
             start = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat()
             end = (datetime.now(timezone.utc) + timedelta(days=2)).isoformat()
             database.execute("""INSERT INTO tasks
@@ -115,6 +116,21 @@ class IsolatedInstance(unittest.TestCase):
         self.assertEqual(notice["title"], "Future notice")
         self.assertEqual(notice["visibleFromUtc"], start)
         self.assertEqual(notice["visibleUntilUtc"], end)
+        self.assertEqual(notice["channel"], "general")
+
+
+class ChannelValidation(unittest.TestCase):
+    def test_valid_and_invalid_slugs(self):
+        import sys
+        sys.path.insert(0, str(SOURCE))
+        import app
+        for name in ("general", "lobby", "staff-room-2"):
+            with self.subTest(name=name):
+                self.assertEqual(app.clean_task({"channel": name}, partial=True)["channel"], name)
+        for name in ("Lobby", "../private", "has space", "", "x" * 33):
+            with self.subTest(name=name):
+                with self.assertRaises(ValueError):
+                    app.clean_task({"channel": name}, partial=True)
 
 
 class ScheduleValidation(unittest.TestCase):

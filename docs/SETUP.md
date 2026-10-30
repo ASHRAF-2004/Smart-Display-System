@@ -20,6 +20,8 @@ python scripts/first_run.py --public-origin "https://display.example.com"
 
 The application itself stays bound to `127.0.0.1:8787` and should be placed behind an HTTPS reverse proxy or tunnel. Do not copy private config or a real organization's SQLite database into a public repository.
 
+**Screens:** the default URL shows channel `general`. For another screen, open `/?channel=lobby` and assign selected tasks to `lobby` in the Editor. A channel controls display selection only, not read permissions.
+
 **Logo:** sign in as an approved Editor, then upload your organization's image using the existing logo control. The placeholder remains until then.
 
 **Application name:** rerun `first_run.py --site-name "New name"`. The title is stored privately in `.data/site-config.json`.

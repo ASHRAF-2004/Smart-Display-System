@@ -40,9 +40,10 @@ No separate database server, no mandatory container platform, and no paid cloud 
 | Configurable instance timezone (IANA) | Available; defaults to UTC |
 | Day/Night themes and responsive interfaces | Available |
 | Global selected weekday | Available |
+| Multiple TV channels via `?channel=lobby` | Available, same backend and global selected weekday |
 | Custom uploaded logo and configurable display name | Available |
 | Recurring tasks and distinct display/expiry schedule | Planned |
-| Per-screen channels, playlists and remote fleet monitoring | Planned |
+| Per-screen playlists and remote fleet monitoring | Planned |
 | Offline signage playback | Planned |
 
 Existing and future requirements are tracked separately in [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md). Do not confuse a task's **due date** with when an announcement disappears: a visibility end-time can now hide a notice from the TV without deleting its task record. Recurring tasks and per-display playlists remain unimplemented.
@@ -107,6 +108,20 @@ Authenticated changes are checked server-side, written to SQLite, then announced
 
 See the [architecture map](docs/architecture.mermaid) for selected code owners and dependency paths.
 
+## Multiple screens
+
+By default, a TV shows items assigned to channel `general`. To display another set of announcements on a different screen, open a URL such as:
+
+```text
+http://127.0.0.1:8787/?channel=lobby
+```
+
+An Editor can set each task's **Screen channel** to `lobby`, `staff-room` or another short lowercase slug. This does not require setting up a separate database or server. The currently selected weekday is still global; independent day/channel schedules are not implemented. Channel selection is a display filter, **not an access-control boundary**, because the public API is readable.
+
+## Scheduled display windows
+
+In the task editor, leave the optional visibility fields empty to display a pending item immediately. Specify a **Show from** time to publish later and/or a **Show until** time to remove it from the TV automatically. These times are separate from the task's completion deadline. The task and its history remain in SQLite.
+
 ## Branding without editing source
 
 A new instance includes a placeholder logo. An authorized Editor can upload a logo through the app. The site title can be set with `--site-name` and is stored in private instance configuration, not in tracked HTML. The default visual palette is a starting theme, not an organization identity.
@@ -142,7 +157,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and checks, [testin
 ## Roadmap
 
 - **Next:** recurring weekday announcements, draft/preview/publish and independent per-screen content.
-- **Afterward:** independent display channels, playlists, per-screen content selection, richer searchable history.
+- **Afterward:** screen playlists, independent per-screen weekday selection, richer searchable history.
 - **Longer term:** offline player behavior, device health, media processing and advanced roles.
 
 These are proposals, **not shipped features**. See [requirements](docs/REQUIREMENTS.md).

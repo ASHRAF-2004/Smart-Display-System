@@ -22,6 +22,7 @@ This document separates current application behavior from new requirements. Only
 | E14 | Responsive and fullscreen TV views | Mobile/tablet/TV screen sizes |
 | E15 | Task visibility has optional start/end UTC windows | Future/active/expired items in TV |
 | E16 | Instance timezone is configurable (IANA) | UTC and DST-zone setup, UI conversion |
+| E17 | URL-selected screen channels | Assign task channel and use `?channel=...` on each screen |
 
 ## New requirements
 
@@ -45,7 +46,7 @@ This document separates current application behavior from new requirements. Only
 |---|---|---|
 | N10 | Recurring weekday rules | Mon–Fri time rule, occurrence-specific completion |
 | N11 | Scheduled visibility windows and due dates | Implemented in E15; retain as a regression requirement |
-| N12 | Independent displays/channels | TV A and TV B can show different boards |
+| N12 | Screen-specific task channel | Implemented in E17; per-screen weekday scheduling remains future work |
 | N13 | Draft/preview/publish | Draft items never appear on public screens |
 | N14 | Configurable display parameters | Rotation seconds, language, density by screen |
 | N15 | Archive/search/filter | History remains accessible and manageable |
@@ -66,8 +67,8 @@ This document separates current application behavior from new requirements. Only
 ## Explicit behavior boundaries
 
 - **Deadline** is a completion due time, **not** an automatic display expiration.
-- **Selected weekday** is global, **not** a per-TV channel.
+- **Selected weekday** is global. **Channel** filters a screen's tasks but does not establish per-screen selected days or authorization.
 - **Recurrence** is not implemented.
 - **Viewer** is publicly readable; deployers are responsible for access restrictions if task content is private.
 - **Time zone** is configurable per installation and defaults to UTC; DST-boundary browser testing is part of release verification.
-- **Visibility scheduling** controls which items appear on the TV. Public `/api/state` may still include future item content, so scheduling is **not** a privacy boundary.
+- **Visibility scheduling and channels** control which items appear on the TV. Public `/api/state` may still include future item content, so scheduling is **not** a privacy boundary.

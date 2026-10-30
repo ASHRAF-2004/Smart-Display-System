@@ -15,7 +15,6 @@ from pathlib import Path
 APP = None
 COOKIE = '__Host-smartdisplay_session'
 SESSION_SECONDS = 7 * 86400
-MYT = timezone(timedelta(hours=8), 'Asia/Kuala_Lumpur')
 SEEDED_EDITORS = {}  # No organization accounts are shipped.
 FORMATS = {'.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.mp4': 'video/mp4', '.webm': 'video/webm'}
 MAX_MEDIA = 25 * 1024 * 1024
@@ -50,6 +49,8 @@ def migrate(app):
         ]
         for sql in statements:
             conn.execute(sql)
+        if 'channel' not in {r['name'] for r in conn.execute('PRAGMA table_info(tasks)')}:
+            conn.execute("ALTER TABLE tasks ADD COLUMN channel TEXT NOT NULL DEFAULT 'general'")
         for email, (name, dept) in SEEDED_EDITORS.items():
             conn.execute('INSERT OR IGNORE INTO authorized_users(email,display_name,department,role,active,created_at,updated_at) VALUES (?,?,?,\'editor\',1,?,?)', (email, name, dept, app.now(), app.now()))
         conn.execute("INSERT OR REPLACE INTO metadata(key,value) VALUES ('security_schema','1')")

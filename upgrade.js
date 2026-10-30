@@ -7,6 +7,8 @@ window.staffAuth = {role:'viewer'};
     let serverOffset = 0;
     const serverNow = () => Date.now() + serverOffset;
     const siteTimeZone = () => window.displayTimeZone || 'UTC';
+    const channelParam = new URLSearchParams(location.search).get('channel') || 'general';
+    const displayChannel = /^[a-z0-9][a-z0-9-]{0,31}$/.test(channelParam) ? channelParam : 'general';
     const zoneParts = date => Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:siteTimeZone(),year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date).map(p=>[p.type,p.value]));
     const inputsFor = iso => {
         if (!iso) return ['', ''];
@@ -75,7 +77,7 @@ window.staffAuth = {role:'viewer'};
         const box=el('tv-tasks-container');
         if (!box) return;
         if (currentView !== 'tv') { box.querySelectorAll('video').forEach(v=>v.pause()); return; }
-        const tasks=(tasksData[selectedOperationalDay] || []).filter(t=>t.status!=='completed' && activeOnScreen(t));
+        const tasks=(tasksData[selectedOperationalDay] || []).filter(t=>t.status!=='completed' && (t.channel||'general')===displayChannel && activeOnScreen(t));
         if (tvDay !== selectedOperationalDay) { tvDay=selectedOperationalDay; tvPage=0; }
         const width=box.clientWidth || 1000, height=box.clientHeight || 400;
         const maxCols=width>=1300?3:width>=650?2:1;
@@ -87,7 +89,7 @@ window.staffAuth = {role:'viewer'};
         const cols=visible.length<=1?1:Math.min(maxCols,visible.length);
         const rows=Math.max(1,Math.ceil(visible.length/cols));
         box.style.setProperty('--tv-cols',cols); box.style.setProperty('--tv-rows',rows);
-        safeSetText('tv-task-count',`${tasks.length} active ${tasks.length===1?'task':'tasks'}`);
+        safeSetText('tv-task-count',`${tasks.length} active ${tasks.length===1?'task':'tasks'} · Screen: ${displayChannel}`);
         safeSetText('tv-page-dots',tvPages>1?`Page ${tvPage+1} of ${tvPages} · Changes automatically every 15 seconds`:'');
         el('tv-page-dots').hidden=tvPages===1;
         const signature=JSON.stringify([visible.map(t=>[t.id,t.version,overdue(t)]),cols,rows,selectedOperationalDay,currentLang,customLogoUrl]);
@@ -107,7 +109,7 @@ window.staffAuth = {role:'viewer'};
         const list=el('admin-tasks-list');
         if (!list || currentView!=='admin') return;
         const tasks=tasksData[selectedOperationalDay] || [];
-        list.innerHTML=tasks.length?tasks.map(task=>`<article class="task-row" data-task-id="${task.id}">${mediaMarkup(task)}<div class="task-row-content"><h4>${esc(task.title)}</h4><p class="yu-muted">${esc(task.dept)} · ${esc(task.priority)}</p><p>${esc(task.desc)}</p><p class="${overdue(task)?'yu-overdue':'yu-muted'}">${overdue(task)?'Overdue · ':''}${esc(deadlineLabel(task))}</p><span class="yu-muted">${task.status==='completed'?'Completed':(!activeOnScreen(task)?(task.visibleFromUtc&&Date.parse(task.visibleFromUtc)>serverNow()?'Scheduled':'Off screen'):'Pending')}</span></div>${editor()?`<div class="task-row-actions"><button class="yu-button" data-edit="${task.id}">Edit</button><button class="yu-button" data-status="${task.id}">${task.status==='completed'?'Reopen':'Complete'}</button><button class="yu-button yu-danger" data-delete="${task.id}" aria-label="Delete ${esc(task.title)}">Delete</button></div>`:''}</article>`).join(''):'<p class="yu-muted">No tasks for this day.</p>';
+        list.innerHTML=tasks.length?tasks.map(task=>`<article class="task-row" data-task-id="${task.id}">${mediaMarkup(task)}<div class="task-row-content"><h4>${esc(task.title)}</h4><p class="yu-muted">${esc(task.dept)} · ${esc(task.priority)} · Screen: ${esc(task.channel||'general')}</p><p>${esc(task.desc)}</p><p class="${overdue(task)?'yu-overdue':'yu-muted'}">${overdue(task)?'Overdue · ':''}${esc(deadlineLabel(task))}</p><span class="yu-muted">${task.status==='completed'?'Completed':(!activeOnScreen(task)?(task.visibleFromUtc&&Date.parse(task.visibleFromUtc)>serverNow()?'Scheduled':'Off screen'):'Pending')}</span></div>${editor()?`<div class="task-row-actions"><button class="yu-button" data-edit="${task.id}">Edit</button><button class="yu-button" data-status="${task.id}">${task.status==='completed'?'Reopen':'Complete'}</button><button class="yu-button yu-danger" data-delete="${task.id}" aria-label="Delete ${esc(task.title)}">Delete</button></div>`:''}</article>`).join(''):'<p class="yu-muted">No tasks for this day.</p>';
         list.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openTaskEditor(Number(b.dataset.edit)));
         list.querySelectorAll('[data-status]').forEach(b=>b.onclick=async()=>{
             const task=canonicalTaskState.get(b.dataset.status);
@@ -272,8 +274,9 @@ window.staffAuth = {role:'viewer'};
         el('task-editor-form').reset(); safeSetText('edit-error',''); safeSetText('deadline-error','');
         safeSetText('task-editor-title',id?'Edit Task':'Add Task'); safeSetText('edit-save',id?'Save Changes':'Create Task');
         el('edit-upload-progress').hidden=true;
-        const task=originalTask||{day:selectedOperationalDay,dept:'General',priority:'Normal',status:'pending'};
+        const task=originalTask||{day:selectedOperationalDay,dept:'General',priority:'Normal',status:'pending',channel:displayChannel};
         for(const [field,key] of [['title','title'],['desc','desc'],['day','day'],['dept','dept'],['priority','priority'],['status','status'],['schedule','time']]) el('edit-'+field).value=task[key]||'';
+        el('edit-channel').value=task.channel || 'general';
         const [date,time]=inputsFor(task.deadlineUtc);el('edit-date').value=date;el('edit-time').value=time;
         for(const [prefix,iso] of [['visible-from',task.visibleFromUtc],['visible-until',task.visibleUntilUtc]]){
             const parts=inputsFor(iso);el(prefix+'-date').value=parts[0];el(prefix+'-time').value=parts[1];
@@ -300,7 +303,7 @@ window.staffAuth = {role:'viewer'};
         saving=true;el('edit-save').disabled=true;el('edit-cancel').disabled=true;el('edit-close').disabled=true;
         safeSetText('edit-error','');safeSetText('edit-save','Saving…');
         try {
-            const payload={title:el('edit-title').value.trim(),desc:el('edit-desc').value.trim(),day:el('edit-day').value,dept:el('edit-dept').value.trim(),priority:el('edit-priority').value,status:el('edit-status').value,time:el('edit-schedule').value.trim(),deadlineUtc:deadlineValue(),visibleFromUtc:visibilityValue('visible-from'),visibleUntilUtc:visibilityValue('visible-until')};
+            const payload={title:el('edit-title').value.trim(),desc:el('edit-desc').value.trim(),day:el('edit-day').value,dept:el('edit-dept').value.trim(),priority:el('edit-priority').value,status:el('edit-status').value,time:el('edit-schedule').value.trim(),deadlineUtc:deadlineValue(),visibleFromUtc:visibilityValue('visible-from'),visibleUntilUtc:visibilityValue('visible-until'),channel:el('edit-channel').value.trim()};
             if(originalTask && !payload.deadlineUtc && !originalTask.deadlineUtc) delete payload.deadlineUtc;
             const data=await smartdisplayApi(editingId?`/api/tasks/${editingId}`:'/api/tasks',{method:editingId?'PATCH':'POST',body:JSON.stringify(payload)});
             acceptCommittedChange(data);editingId=data.task.id;originalTask=data.task;
@@ -342,6 +345,7 @@ window.staffAuth = {role:'viewer'};
             <label>Task title<input id="edit-title" required maxlength="2000" autocomplete="off"></label>
             <label>Description<textarea id="edit-desc" rows="3" maxlength="2000"></textarea></label>
             <div class="form-pair"><label>Weekday<select id="edit-day">${TASK_DAYS.map(d=>`<option>${d}</option>`).join('')}</select></label><label>Department<input id="edit-dept" required maxlength="2000" list="department-options"><datalist id="department-options"><option>General</option><option>Operations</option><option>Facilities</option><option>People</option></datalist></label></div>
+            <label>Screen channel (lowercase, e.g. general or lobby)<input id="edit-channel" required maxlength="32" pattern="[a-z0-9][a-z0-9-]{0,31}" aria-describedby="channel-hint"><span id="channel-hint" class="yu-muted">Open /?channel=lobby on a different TV to show only lobby items. Default is general.</span></label>
             <div class="form-pair"><label>Priority<select id="edit-priority"><option>Normal</option><option>Important</option><option>Urgent</option></select></label><label>Status<select id="edit-status"><option value="pending">Pending</option><option value="completed">Completed</option></select></label></div>
             <div><div class="form-pair"><label><span><i class="fa-regular fa-calendar" aria-hidden="true"></i> Deadline date</span><input id="edit-date" type="date" aria-describedby="deadline-zone deadline-error"></label><label><span><i class="fa-regular fa-clock" aria-hidden="true"></i> Deadline time</span><input id="edit-time" type="time" aria-describedby="deadline-zone deadline-error"></label></div><p id="deadline-zone" class="yu-muted">All dates in configured display timezone</p><p id="deadline-error" class="yu-error" role="alert"></p></div>
             <fieldset class="visibility-fieldset"><legend>Show on display (optional)</legend><p class="yu-muted">Separate from the completion deadline. Leave empty to show immediately or indefinitely.</p>
