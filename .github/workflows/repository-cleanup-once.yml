@@ -1,0 +1,33 @@
+name: One-time removal of obsolete repository backups and merged branches
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/repository-cleanup-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.repository == 'ASHRAF-2004/Smart-Display-System'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove exact obsolete release, tag and merged branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Removing archived release and its tag"
+          gh api --silent --method DELETE "repos/$GH_REPO/releases/407970228"
+          gh api --silent --method DELETE "repos/$GH_REPO/git/refs/tags/full-backup-2026-10-09"
+
+          echo "Removing only the three known merged branches"
+          gh api --silent --method DELETE "repos/$GH_REPO/git/refs/heads/docs/signage-landscape-20261030"
+          gh api --silent --method DELETE "repos/$GH_REPO/git/refs/heads/feat/brand-neutral-signage-20261030"
+          gh api --silent --method DELETE "repos/$GH_REPO/git/refs/heads/feat/scheduling-portability-hardening-20261030"
+
+          echo "Exact cleanup targets removed; main is not modified."

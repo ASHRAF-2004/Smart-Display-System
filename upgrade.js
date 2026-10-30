@@ -329,7 +329,6 @@ window.staffAuth = {role:'viewer'};
         el('admin-directives-editor-list').closest('.col-span-12 > div.bg-slate-50')?.classList.add('editor-only');
         el('view-sheets').classList.add('editor-only');
         document.querySelectorAll('[onclick="switchView(\'sheets\')"]').forEach(n=>n.classList.add('editor-only'));
-        el('btn-reset-tasks')?.closest('button')?.classList.add('editor-only');
         const adminView=el('view-admin'),workspace=adminView.firstElementChild;
         workspace.id='manager-workspace';workspace.classList.add('manager-workspace','editor-only');
         adminView.insertAdjacentHTML('afterbegin',`<section id="manager-access-gate" class="manager-access-gate viewer-only" aria-labelledby="manager-access-title">
@@ -361,7 +360,6 @@ window.staffAuth = {role:'viewer'};
         el('staff-sign-in').onclick=()=>prepareGoogleSignIn();
         el('staff-logout').onclick=async()=>{try{await smartdisplayApi('/api/auth/logout',{method:'POST',body:'{}'});googleRendered=false;await refreshStaffSession();showToast('Signed out. Public viewing remains available.');}catch(e){safeSetText('staff-error',e.message);}};
         el('task-editor-form').onsubmit=saveTask;
-        window.resetDefaultTasks=()=>showToast('Demo reset is not available. Your tasks are preserved.');
         el('edit-close').onclick=el('edit-cancel').onclick=()=>{if(!saving)el('task-editor').close();};
         el('task-editor').addEventListener('cancel',e=>{if(saving)e.preventDefault();});
         el('task-editor').addEventListener('close',()=>{if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;el('edit-media-preview').replaceChildren();returnFocus?.focus();});

@@ -1257,7 +1257,6 @@
             safeSetText('btn-upload-task-img', t.btnUploadTaskImg);
             safeSetText('btn-submit-task', t.btnSubmitTask);
             safeSetText('txt-step2-prefix', t.step2Prefix);
-            safeSetText('btn-reset-tasks', t.btnResetTasks);
             safeSetText('txt-edit-directives-heading', t.editDirectivesHeading);
             safeSetText('btn-add-directive', t.btnAddDirective);
             safeSetText('txt-edit-supervisors-heading', t.editSupervisorsHeading);
@@ -2362,14 +2361,6 @@
                     acceptBusinessEvent(response);
                     showToast('Task removed.');
                 } catch (error) { showToast(`Task was not removed: ${error.message}`, 'error'); }
-            };
-
-            window.resetDefaultTasks = async function () {
-                try {
-                    const response = await request('/api/tasks/reset', { method: 'POST', body: '{}' });
-                    acceptBusinessEvent(response);
-                    showToast('Default tasks restored!');
-                } catch (error) { showToast(`Reset failed: ${error.message}`, 'error'); }
             };
 
             window.updateTickerText = async function () {

@@ -1,12 +1,15 @@
-# Live application data, authentication configuration, backups, and logs
+# Application state and secrets: NEVER commit real users, credentials or uploads
 /.data/
 /.backup/
+/backups/
 /.logs/
+/.tools/
 *.db
 *.db-*
 *.sqlite
 *.sqlite3
 *.log
+*.bak
 .env
 .env.*
 !.env.example
@@ -16,21 +19,12 @@
 *.p12
 *.pfx
 
-# Cloudflare runtime, tunnel credentials, and machine-specific configuration
-/.tools/cloudflared/
-
-# Browser sessions and generated acceptance-test artifacts
+# Generated test and browser artifacts
 /.browser-profile/
 /.browser-profile-public/
-/.tools/browser-profiles/
 artifacts/
 
-# Downloaded runtimes, installers, dependencies, and staging copies
-/.tools/python/
-/.tools/python-*.zip
-/.tools/node-runtime/
-/.tools/final-acceptance/get-pip.py
-/.tools/upgrade/stage/
+# Local dependencies and interpreters
 vendor/
 node_modules/
 .venv/
@@ -38,8 +32,7 @@ venv/
 __pycache__/
 *.py[cod]
 
-# Local design tooling and operating-system files
-/.tools/impeccable/
+# Editor and operating system
 /.superdesign/
 .DS_Store
 Thumbs.db
