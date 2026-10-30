@@ -1,4 +1,4 @@
-/* YourUni refinement: existing identity and device-local theme. */
+/* Generic display UI styling; colors can be customized. */
 html:not([data-role="editor"]) .editor-only { display:none!important; }
 html[data-role="editor"] .viewer-only { display:none!important; }
 [hidden] { display:none!important; }

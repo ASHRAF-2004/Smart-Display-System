@@ -23,7 +23,7 @@ window.staffAuth = {role:'viewer'};
     let tvPage=0, tvPages=1, tvDay='', tvSignature='';
     const logoMarkup = () => {
         const custom=safeImage(customLogoUrl);
-        if (custom) return `<img class="tv-brand-mark" src="${esc(custom)}" alt="YourUni logo">`;
+        if (custom) return `<img class="tv-brand-mark" src="${esc(custom)}" alt="Display logo">`;
         const source = el('tv-default-logo-svg');
         if (!source) return '';
         const clone = source.cloneNode(true);
@@ -32,7 +32,7 @@ window.staffAuth = {role:'viewer'};
         clone.classList.add('tv-brand-mark');
         clone.setAttribute('width','330');
         clone.setAttribute('height','65');
-        clone.setAttribute('aria-label','YourUni');
+        clone.setAttribute('aria-label','Display logo');
         return clone.outerHTML;
     };
     const fallbackMedia = node => {
@@ -106,9 +106,9 @@ window.staffAuth = {role:'viewer'};
         });
     };
     const ACCESS_COPY = {
-        en:{heading:'Sign in to manage the live display',body:'The Manager / HR Panel is protected. Use an approved Google account to update tasks, deadlines, media and the broadcast day.',secure:'Google verifies your identity. YourUni never receives or stores your Google password.',benefits:['Publish changes live','Manage media and deadlines','Keep every screen in sync'],preparing:'Preparing secure Google sign-in…',ready:'Choose your approved Google account to continue.',retry:'Try Google sign-in again',signed:'Signed in as',logout:'Logout',viewerNav:'Manager / HR Panel — staff sign-in required',editorNav:'Manager / HR Panel — signed in'},
-        ar:{heading:'سجّل الدخول لإدارة شاشة العرض المباشر',body:'لوحة المدير والموارد البشرية محمية. استخدم حساب Google معتمداً لتحديث المهام والمواعيد والوسائط ويوم العرض.',secure:'تتحقق Google من هويتك. لا تستلم YourUni كلمة مرور Google الخاصة بك ولا تخزنها.',benefits:['نشر التغييرات مباشرة','إدارة الوسائط والمواعيد','مزامنة جميع الشاشات'],preparing:'جارٍ تجهيز تسجيل الدخول الآمن…',ready:'اختر حساب Google المعتمد للمتابعة.',retry:'إعادة محاولة تسجيل الدخول',signed:'تم تسجيل الدخول باسم',logout:'تسجيل الخروج',viewerNav:'لوحة المدير والموارد البشرية — يلزم تسجيل الدخول',editorNav:'لوحة المدير والموارد البشرية — تم تسجيل الدخول'},
-        ms:{heading:'Log masuk untuk mengurus paparan langsung',body:'Panel Pengurus / HR dilindungi. Gunakan akaun Google yang diluluskan untuk mengemas kini tugasan, tarikh akhir, media dan hari siaran.',secure:'Google mengesahkan identiti anda. YourUni tidak menerima atau menyimpan kata laluan Google anda.',benefits:['Terbitkan perubahan secara langsung','Urus media dan tarikh akhir','Pastikan semua skrin disegerakkan'],preparing:'Menyediakan log masuk Google yang selamat…',ready:'Pilih akaun Google yang diluluskan untuk meneruskan.',retry:'Cuba log masuk Google lagi',signed:'Log masuk sebagai',logout:'Log keluar',viewerNav:'Panel Pengurus / HR — log masuk kakitangan diperlukan',editorNav:'Panel Pengurus / HR — telah log masuk'}
+        en:{heading:'Sign in to manage the live display',body:'The Admin Panel is protected. Use an approved Google account to update tasks, deadlines, media and the broadcast day.',secure:'Google verifies your identity. Smart Display never receives or stores your Google password.',benefits:['Publish changes live','Manage media and deadlines','Keep every screen in sync'],preparing:'Preparing secure Google sign-in…',ready:'Choose your approved Google account to continue.',retry:'Try Google sign-in again',signed:'Signed in as',logout:'Logout',viewerNav:'Admin Panel — staff sign-in required',editorNav:'Admin Panel — signed in'},
+        ar:{heading:'سجّل الدخول لإدارة شاشة العرض المباشر',body:'لوحة المدير والموارد البشرية محمية. استخدم حساب Google معتمداً لتحديث المهام والمواعيد والوسائط ويوم العرض.',secure:'تتحقق Google من هويتك. لا تستلم Smart Display كلمة مرور Google الخاصة بك ولا تخزنها.',benefits:['نشر التغييرات مباشرة','إدارة الوسائط والمواعيد','مزامنة جميع الشاشات'],preparing:'جارٍ تجهيز تسجيل الدخول الآمن…',ready:'اختر حساب Google المعتمد للمتابعة.',retry:'إعادة محاولة تسجيل الدخول',signed:'تم تسجيل الدخول باسم',logout:'تسجيل الخروج',viewerNav:'لوحة المدير والموارد البشرية — يلزم تسجيل الدخول',editorNav:'لوحة المدير والموارد البشرية — تم تسجيل الدخول'},
+        ms:{heading:'Log masuk untuk mengurus paparan langsung',body:'Panel Pengurus / HR dilindungi. Gunakan akaun Google yang diluluskan untuk mengemas kini tugasan, tarikh akhir, media dan hari siaran.',secure:'Google mengesahkan identiti anda. Smart Display tidak menerima atau menyimpan kata laluan Google anda.',benefits:['Terbitkan perubahan secara langsung','Urus media dan tarikh akhir','Pastikan semua skrin disegerakkan'],preparing:'Menyediakan log masuk Google yang selamat…',ready:'Pilih akaun Google yang diluluskan untuk meneruskan.',retry:'Cuba log masuk Google lagi',signed:'Log masuk sebagai',logout:'Log keluar',viewerNav:'Panel Pengurus / HR — log masuk kakitangan diperlukan',editorNav:'Panel Pengurus / HR — telah log masuk'}
     };
     const accessCopy=()=>ACCESS_COPY[currentLang]||ACCESS_COPY.en;
     function updateManagerAccessCopy(){
@@ -134,7 +134,7 @@ window.staffAuth = {role:'viewer'};
     }
     window.refreshStaffSession = async () => {
         try {
-            const state=await youruniApi('/api/auth/session');
+            const state=await smartdisplayApi('/api/auth/session');
             if(state.serverTime) serverOffset=Date.parse(state.serverTime)-Date.now();
             window.staffAuth=state;
             document.documentElement.dataset.role=state.role;
@@ -165,11 +165,11 @@ window.staffAuth = {role:'viewer'};
         try {
             if (!staffAuth.clientId) throw Error('Staff sign-in is awaiting Google configuration. Public viewing is available.');
             await loadGoogle();
-            const {nonce}=await youruniApi('/api/auth/challenge',{method:'POST',body:'{}'});
+            const {nonce}=await smartdisplayApi('/api/auth/challenge',{method:'POST',body:'{}'});
             google.accounts.id.initialize({client_id:staffAuth.clientId,nonce,auto_select:false,callback:async response=>{
                 zone?.classList.add('is-verifying');safeSetText('staff-login-status','Verifying your Google account…');
                 try {
-                    await youruniApi('/api/auth/google',{method:'POST',body:JSON.stringify({credential:response.credential})});
+                    await smartdisplayApi('/api/auth/google',{method:'POST',body:JSON.stringify({credential:response.credential})});
                     el('google-button').replaceChildren();googleRendered=false;safeSetText('staff-error','');await refreshStaffSession();
                     if(editor())showToast(`Welcome, ${staffAuth.name}. Editor controls are ready.`);
                 } catch(e){safeSetText('staff-error',e.message);button.hidden=false;}
@@ -234,7 +234,7 @@ window.staffAuth = {role:'viewer'};
         el('task-editor-form').reset(); safeSetText('edit-error',''); safeSetText('deadline-error','');
         safeSetText('task-editor-title',id?'Edit Task':'Add Task'); safeSetText('edit-save',id?'Save Changes':'Create Task');
         el('edit-upload-progress').hidden=true;
-        const task=originalTask||{day:selectedOperationalDay,dept:'General Office',priority:'Normal',status:'pending'};
+        const task=originalTask||{day:selectedOperationalDay,dept:'General',priority:'Normal',status:'pending'};
         for(const [field,key] of [['title','title'],['desc','desc'],['day','day'],['dept','dept'],['priority','priority'],['status','status'],['schedule','time']]) el('edit-'+field).value=task[key]||'';
         const [date,time]=inputsFor(task.deadlineUtc);el('edit-date').value=date;el('edit-time').value=time;
         preview(task); validateDeadline(); el('task-editor').showModal(); el('edit-title').focus();
@@ -258,10 +258,10 @@ window.staffAuth = {role:'viewer'};
         try {
             const payload={title:el('edit-title').value.trim(),desc:el('edit-desc').value.trim(),day:el('edit-day').value,dept:el('edit-dept').value.trim(),priority:el('edit-priority').value,status:el('edit-status').value,time:el('edit-schedule').value.trim(),deadlineUtc:deadlineValue()};
             if(originalTask && !payload.deadlineUtc && !originalTask.deadlineUtc) delete payload.deadlineUtc;
-            const data=await youruniApi(editingId?`/api/tasks/${editingId}`:'/api/tasks',{method:editingId?'PATCH':'POST',body:JSON.stringify(payload)});
+            const data=await smartdisplayApi(editingId?`/api/tasks/${editingId}`:'/api/tasks',{method:editingId?'PATCH':'POST',body:JSON.stringify(payload)});
             acceptCommittedChange(data);editingId=data.task.id;originalTask=data.task;
             if(selectedFile) {const media=await uploadMedia(editingId,selectedFile);acceptCommittedChange(media);selectedFile=null;}
-            else if(removeMedia) acceptCommittedChange(await youruniApi(`/api/tasks/${editingId}/media`,{method:'DELETE',body:'{}'}));
+            else if(removeMedia) acceptCommittedChange(await smartdisplayApi(`/api/tasks/${editingId}/media`,{method:'DELETE',body:'{}'}));
             el('task-editor').close();showToast('Task saved. All displays update live.');
         } catch(e) {safeSetText('edit-error',e.message);}
         finally {saving=false;el('edit-save').disabled=false;el('edit-cancel').disabled=false;el('edit-close').disabled=false;safeSetText('edit-save','Save Changes');}
@@ -285,10 +285,10 @@ window.staffAuth = {role:'viewer'};
         workspace.id='manager-workspace';workspace.classList.add('manager-workspace','editor-only');
         adminView.insertAdjacentHTML('afterbegin',`<section id="manager-access-gate" class="manager-access-gate viewer-only" aria-labelledby="manager-access-title">
             <div class="manager-access-visual" aria-hidden="true"><span class="access-orbit orbit-one"></span><span class="access-orbit orbit-two"></span><div class="access-emblem"><i class="fa-solid fa-user-shield"></i><span class="access-live-dot"></span></div></div>
-            <div class="manager-access-content"><h2 id="manager-access-title" tabindex="-1">Sign in to manage the live display</h2><p id="manager-access-body" class="manager-access-body">The Manager / HR Panel is protected. Use an approved Google account to update tasks, deadlines, media and the broadcast day.</p>
+            <div class="manager-access-content"><h2 id="manager-access-title" tabindex="-1">Sign in to manage the live display</h2><p id="manager-access-body" class="manager-access-body">The Admin Panel is protected. Use an approved Google account to update tasks, deadlines, media and the broadcast day.</p>
             <ul class="manager-access-benefits"><li><i class="fa-solid fa-bolt"></i><span id="manager-access-benefit-1">Publish changes live</span></li><li><i class="fa-solid fa-photo-film"></i><span id="manager-access-benefit-2">Manage media and deadlines</span></li><li><i class="fa-solid fa-display"></i><span id="manager-access-benefit-3">Keep every screen in sync</span></li></ul>
             <div id="google-signin-zone" class="google-signin-zone" aria-live="polite"><div class="google-loader" aria-hidden="true"><i class="fa-solid fa-circle-notch fa-spin"></i></div><p id="staff-login-status">Preparing secure Google sign-in…</p><div id="google-button" class="google-button-host"></div><button id="staff-sign-in" class="yu-button yu-primary" type="button" hidden><i class="fa-brands fa-google" aria-hidden="true"></i><span id="staff-sign-in-label">Try Google sign-in again</span></button><p id="staff-error" class="yu-error" role="alert"></p></div>
-            <p id="manager-access-security" class="manager-access-security"><i class="fa-solid fa-lock" aria-hidden="true"></i><span id="manager-access-security-text">Google verifies your identity. YourUni never receives or stores your Google password.</span></p></div>
+            <p id="manager-access-security" class="manager-access-security"><i class="fa-solid fa-lock" aria-hidden="true"></i><span id="manager-access-security-text">Google verifies your identity. Smart Display never receives or stores your Google password.</span></p></div>
         </section>
         <section id="staff-session-panel" class="staff-session-panel editor-only" aria-label="Signed-in Editor">
             <div class="staff-avatar" aria-hidden="true"><i class="fa-solid fa-user-check"></i></div><div class="staff-session-copy"><span id="staff-session-label">Signed in as</span><strong id="staff-identity"></strong></div><span class="staff-editor-badge"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Editor</span><button id="staff-logout" class="yu-button" type="button"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i><span id="staff-logout-label">Logout</span></button>
@@ -305,13 +305,13 @@ window.staffAuth = {role:'viewer'};
             <p id="edit-error" class="yu-error" role="alert"></p><div class="form-actions"><button id="edit-cancel" class="yu-button" type="button">Cancel</button><button id="edit-save" class="yu-button yu-primary" type="submit">Save Changes</button></div>
         </form></dialog>`);
         el('staff-sign-in').onclick=()=>prepareGoogleSignIn();
-        el('staff-logout').onclick=async()=>{try{await youruniApi('/api/auth/logout',{method:'POST',body:'{}'});googleRendered=false;await refreshStaffSession();showToast('Signed out. Public viewing remains available.');}catch(e){safeSetText('staff-error',e.message);}};
+        el('staff-logout').onclick=async()=>{try{await smartdisplayApi('/api/auth/logout',{method:'POST',body:'{}'});googleRendered=false;await refreshStaffSession();showToast('Signed out. Public viewing remains available.');}catch(e){safeSetText('staff-error',e.message);}};
         el('task-editor-form').onsubmit=saveTask;
         window.resetDefaultTasks=()=>{
             if(!editor())return;
             if(!el('reset-dialog'))document.body.insertAdjacentHTML('beforeend',`<dialog id="reset-dialog" class="task-dialog" aria-labelledby="reset-title"><form id="reset-form"><h2 id="reset-title">Restore default tasks</h2><p>This replaces all current tasks and removes their media. Choose a future Malaysia deadline for the restored tasks.</p><div class="form-pair"><label>Deadline date<input id="reset-date" type="date" required></label><label>Deadline time<input id="reset-time" type="time" required></label></div><p class="yu-muted">Asia/Kuala_Lumpur · UTC+8</p><p id="reset-error" class="yu-error" role="alert"></p><div class="form-actions"><button type="button" class="yu-button" onclick="document.getElementById('reset-dialog').close()">Cancel</button><button id="reset-submit" class="yu-button yu-danger">Replace all tasks</button></div></form></dialog>`);
             el('reset-date').min=inputsFor(new Date(serverNow()).toISOString())[0];
-            el('reset-form').onsubmit=async e=>{e.preventDefault();const deadline=new Date(`${el('reset-date').value}T${el('reset-time').value}:00+08:00`);if(deadline.getTime()<=serverNow()){safeSetText('reset-error','Deadline must be in the future using Malaysia time.');return;}el('reset-submit').disabled=true;try{acceptCommittedChange(await youruniApi('/api/tasks/reset',{method:'POST',body:JSON.stringify({deadlineUtc:deadline.toISOString()})}));el('reset-dialog').close();}catch(error){safeSetText('reset-error',error.message);}finally{el('reset-submit').disabled=false;}};
+            el('reset-form').onsubmit=async e=>{e.preventDefault();const deadline=new Date(`${el('reset-date').value}T${el('reset-time').value}:00+08:00`);if(deadline.getTime()<=serverNow()){safeSetText('reset-error','Deadline must be in the future using Malaysia time.');return;}el('reset-submit').disabled=true;try{acceptCommittedChange(await smartdisplayApi('/api/tasks/reset',{method:'POST',body:JSON.stringify({deadlineUtc:deadline.toISOString()})}));el('reset-dialog').close();}catch(error){safeSetText('reset-error',error.message);}finally{el('reset-submit').disabled=false;}};
             el('reset-dialog').showModal();
         };
         el('edit-close').onclick=el('edit-cancel').onclick=()=>{if(!saving)el('task-editor').close();};

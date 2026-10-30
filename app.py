@@ -1,4 +1,4 @@
-"""Project-local application server for thebekal.com.
+"""Project-local application server for smartdisplay.com.
 
 SQLite is the durable application source of truth and SSE broadcasts committed
 changes. Project-local Google authentication and Pillow validate identity/media.
@@ -20,38 +20,36 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT / '.tools' / 'upgrade' / 'vendor'))
 sys.path.insert(0, str(ROOT))
 import security
-DB_PATH = ROOT / ".data" / "thebekal.db"
+DB_PATH = ROOT / ".data" / "smartdisplay.db"
 LOG_PATH = ROOT / ".logs" / "application-server.log"
-SOURCE_FILE = ROOT / "youruni_tv_task_management_system update 17 Aug.html"
+SOURCE_FILE = ROOT / "index.html"
 DAYS = ("Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
 PRIORITIES = ("Normal", "Important", "Urgent")
 STATUSES = ("pending", "completed")
 
-DEFAULT_TASKS = {
-    "Saturday": [
-        {"id": 1, "title": "Morning Sales Prep & Briefing", "dept": "Sales Dept", "priority": "Important", "time": "09:00 AM - 10:00 AM", "desc": "Review daily lead targets and team assignments", "status": "completed", "imageUrl": ""},
-        {"id": 2, "title": "Client Follow-up Calls", "dept": "Sales Dept", "priority": "Normal", "time": "10:30 AM - 01:00 PM", "desc": "Contact prospective applicants and complete inquiries", "status": "pending", "imageUrl": ""},
-    ],
-    "Sunday": [{"id": 3, "title": "Weekly Planning & HR Review", "dept": "Human Resources HR", "priority": "Urgent", "time": "09:30 AM - 11:30 AM", "desc": "Review attendance and weekly task directives", "status": "pending", "imageUrl": ""}],
-    "Monday": [{"id": 4, "title": "Student Document Verification", "dept": "Preparation Dept", "priority": "Important", "time": "09:00 AM - 12:00 PM", "desc": "Verify application files and submit reports", "status": "pending", "imageUrl": ""}],
-    "Tuesday": [{"id": 5, "title": "Team Performance Alignment", "dept": "General Office", "priority": "Normal", "time": "02:00 PM - 03:30 PM", "desc": "Office 06-02 status sync with department leads", "status": "pending", "imageUrl": ""}],
-    "Wednesday": [{"id": 6, "title": "Mid-week Target Review", "dept": "Sales Dept", "priority": "Important", "time": "11:00 AM - 01:00 PM", "desc": "Evaluate week targets and conversion ratios", "status": "pending", "imageUrl": ""}],
-    "Thursday": [{"id": 7, "title": "Weekly Performance Reporting", "dept": "General Office", "priority": "Urgent", "time": "02:00 PM - 04:00 PM", "desc": "Submit weekly reports to HR before 4:00 PM", "status": "pending", "imageUrl": ""}],
-    "Friday": [{"id": 8, "title": "Office Equipment & Workstation Audit", "dept": "Preparation Dept", "priority": "Normal", "time": "03:00 PM - 05:00 PM", "desc": "Ensure clean desk compliance across office desks", "status": "pending", "imageUrl": ""}],
-}
+DEFAULT_TASKS = {day: [] for day in DAYS}
 DEFAULT_SETTINGS = {
-    "directives": ["Wear official ID badge visibly at all times in 06-02.", "Lock workstations (Win + L) when stepping away.", "Escort and register all office visitors at reception."],
-    "supervisors": [{"title": "Sales Lead", "name": "Mr. Hisham"}, {"title": "HR Overseer", "name": "Ms. Nurul"}],
-    "tickerText": "HR Announcement: Please submit weekly performance reports before 4:00 PM today.",
+    "directives": [],
+    "supervisors": [],
+    "tickerText": "Welcome! Add announcements in the Admin Panel.",
     "customLogoUrl": None,
-    "selectedDay": DAYS[0],
+    "selectedDay": "Monday",
 }
 
 LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(filename=LOG_PATH, level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
+
+def read_site_config() -> dict:
+    path = ROOT / ".data" / "site-config.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
 
 
 def now() -> str:
@@ -165,6 +163,7 @@ def state(conn: sqlite3.Connection | None = None) -> dict:
             "customLogoUrl": settings["customLogoUrl"],
             "selectedDay": settings.get("selectedDay", DAYS[0]),
             "version": version,
+            "siteName": read_site_config().get("site_name", "Smart Display System"),
             "serverTime": now(),
         }
     finally:
@@ -251,7 +250,7 @@ def commit_mutation(operation: str, work) -> dict:
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "thebekal-app/1.0"
+    server_version = "smartdisplay-app/1.0"
 
     def setup(self):
         super().setup()
@@ -418,20 +417,8 @@ class Handler(BaseHTTPRequestHandler):
                 logging.info('task deleted id=%s actor=%s', task_id, actor)
                 security.cleanup_media(obsolete)
             elif method == "POST" and path == "/api/tasks/reset":
-                reset_deadline = security.deadline({'deadlineUtc': self.read_json().get('deadlineUtc')})['deadlineUtc']
-                obsolete = []
-                def reset(conn):
-                    obsolete.extend(r[0] for r in conn.execute('SELECT storage_name FROM task_media'))
-                    conn.execute("DELETE FROM tasks")
-                    stamp = now()
-                    for day, tasks in DEFAULT_TASKS.items():
-                        for task in tasks:
-                            conn.execute("INSERT INTO tasks (id,day,title,dept,priority,task_time,description,image_url,status,created_at,updated_at,version) VALUES (?,?,?,?,?,?,?,?,?,?,?,1)", (task["id"], day, task["title"], task["dept"], task["priority"], task["time"], task["desc"], task["imageUrl"], task["status"], stamp, stamp))
-                            conn.execute('UPDATE tasks SET deadline_utc=?,created_by=?,updated_by=? WHERE id=?', (reset_deadline, actor, actor, task['id']))
-                    return {"result": True, "_snapshot": True}
-                self.send_json(commit_mutation("reset", reset))
-                logging.info('default tasks reset actor=%s', actor)
-                security.cleanup_media(obsolete)
+                raise security.Problem(410, "reset_unavailable", "The demo task reset is unavailable.")
+
             elif method == "POST" and path == "/api/tasks/import":
                 raw = self.read_json()
                 items = raw.get("tasks", []) if isinstance(raw, dict) else []

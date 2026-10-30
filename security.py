@@ -13,17 +13,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 APP = None
-COOKIE = '__Host-youruni_session'
+COOKIE = '__Host-smartdisplay_session'
 SESSION_SECONDS = 7 * 86400
 MYT = timezone(timedelta(hours=8), 'Asia/Kuala_Lumpur')
-SEEDED_EDITORS = {
-    'ammar@your-uni.com': ('Ammar', 'Management'),
-    'omar@your-uni.com': ('Omar', 'Management'),
-    'amin@your-uni.com': ('Amin', 'Management'),
-    'mustafa@your-uni.com': ('Mustafa', 'Production'),
-    'hisham@your-uni.com': ('Hisham', 'Finance'),
-    'nurul@your-uni.com': ('Nurul', 'HR'),
-}
+SEEDED_EDITORS = {}  # No organization accounts are shipped.
 FORMATS = {'.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.mp4': 'video/mp4', '.webm': 'video/webm'}
 MAX_MEDIA = 25 * 1024 * 1024
 LOGIN_ATTEMPTS = deque()
@@ -82,18 +75,21 @@ def session(handler):
 
 def same_origin(handler):
     origin = handler.headers.get('Origin', '')
-    allowed = {'https://thebekal.com'}
+    allowed = {
+        origin for origin in config().get("allowed_origins", [])
+        if isinstance(origin, str) and re.fullmatch(r"https://[A-Za-z0-9.-]+(?::[0-9]{2,5})?", origin)
+    }
     # Loopback is a local browser origin, never an authentication bypass.
     allowed.add(f'http://127.0.0.1:{handler.server.server_port}')
     if origin not in allowed or handler.headers.get('Sec-Fetch-Site', 'same-origin') not in ('same-origin', 'none'):
-        raise Problem(403, 'cross_origin_rejected', 'This action must come from the YourUni website.')
+        raise Problem(403, 'cross_origin_rejected', 'This action must originate from this display application.')
 
 def require_editor(handler):
     user = session(handler)
     if not user:
         raise Problem(401, 'sign_in_required', 'Staff sign-in is required to make changes.')
     if not user['active'] or user['role'] != 'editor':
-        raise Problem(403, 'editor_not_authorized', 'This account is not authorized to edit YourUni.')
+        raise Problem(403, 'editor_not_authorized', 'This account is not authorized to edit this display.')
     same_origin(handler)
     if not secrets.compare_digest(handler.headers.get('X-CSRF-Token', ''), user['csrf_token']):
         raise Problem(403, 'csrf_rejected', 'Refresh your staff session and try again.')
@@ -136,14 +132,14 @@ def auth_mutation(handler, path):
         with APP.db() as conn:
             conn.execute('DELETE FROM login_challenges WHERE expires_at<?', (time.time(),))
             conn.execute('INSERT INTO login_challenges VALUES (?,?,?)', (digest(token), nonce, int(time.time()) + 300))
-        handler.extra_cookie = f'__Host-youruni_login={token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=300'
+        handler.extra_cookie = f'__Host-smartdisplay_login={token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=300'
         handler.send_json({'nonce': nonce})
     elif path == '/api/auth/google':
         data = handler.read_json()
         client = config().get('google_client_id', '')
         if not client:
             raise Problem(503, 'google_setup_required', 'Staff sign-in is awaiting Google configuration. Public viewing is available.')
-        token = cookie_value(handler, '__Host-youruni_login')
+        token = cookie_value(handler, '__Host-smartdisplay_login')
         with APP.db() as conn:
             challenge = conn.execute('SELECT * FROM login_challenges WHERE token_hash=? AND expires_at>?', (digest(token), time.time())).fetchone()
         if not challenge:

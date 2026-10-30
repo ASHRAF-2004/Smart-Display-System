@@ -1,3 +1,0 @@
-$root='C:\Users\user\Desktop\Slide show'; $log=Join-Path $root '.logs\cloudflared-watchdog.log'; $exe=Join-Path $root '.tools\cloudflared\cloudflared.exe'; $cfg=Join-Path $root '.tools\cloudflared\config.yml'
-function L([string]$m){"$(Get-Date -Format o) identity=$([Security.Principal.WindowsIdentity]::GetCurrent().Name) watchdogPid=$PID $m"|Add-Content $log}
-while($true){try{$p=Start-Process -FilePath $exe -ArgumentList "--config `"$cfg`" --no-autoupdate tunnel run thebekal-pc" -WorkingDirectory $root -WindowStyle Hidden -PassThru;L "child=$($p.Id)";Wait-Process $p.Id;L "child-exited=$($p.Id)"}catch{L $_.Exception.Message};Start-Sleep 5}

@@ -1,0 +1,2465 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root" dir="ltr" class="dark" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>SMART DISPLAY - Smart TV Broadcast & Task System</title>
+
+    <!-- Apply the browser-local global theme before styles load to avoid a light-page flash. -->
+    <script>
+        (() => {
+            let theme = 'dark';
+            try {
+                theme = localStorage.getItem('smartdisplay_theme') === 'light' ? 'light' : 'dark';
+            } catch (_) {
+                theme = 'dark';
+            }
+            const root = document.documentElement;
+            root.dataset.theme = theme;
+            root.classList.toggle('dark', theme === 'dark');
+            root.style.colorScheme = theme;
+        })();
+    </script>
+
+    <link rel="stylesheet" href="/upgrade.css?v=20260908-global-header-footer-2">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Google Fonts: Cairo & Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            purple: '#381565',
+                            darkPurple: '#210b3e',
+                            lightPurple: '#6a31ab',
+                            yellow: '#f2b629',
+                            lightYellow: '#fef8e7',
+                            accent: '#f2b629'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                        sans: ['Plus Jakarta Sans', 'Cairo', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root,
+        [data-theme="light"] {
+            --app-bg: #f8fafc;
+            --app-surface: #ffffff;
+            --app-surface-muted: #f1f5f9;
+            --app-text: #0f172a;
+            --app-text-muted: #475569;
+            --app-border: #cbd5e1;
+            --app-footer-bg: #ffffff;
+            --app-footer-text: #475569;
+            --app-overlay: rgba(15, 23, 42, 0.55);
+            --app-focus: #f2b629;
+            --app-header-bg: #fffdf6;
+            --app-header-text: #2b124a;
+            --app-header-muted: #654b77;
+            --app-header-border: #e2d3ed;
+            --app-header-control-bg: #f4edf9;
+            --app-header-control-border: #ddc9eb;
+            --app-header-control-hover: #eadff3;
+            --app-header-shadow: 0 10px 30px -24px rgba(56, 21, 101, 0.55);
+        }
+        [data-theme="dark"] {
+            --app-bg: #020617;
+            --app-surface: #0f172a;
+            --app-surface-muted: #1e293b;
+            --app-text: #f8fafc;
+            --app-text-muted: #cbd5e1;
+            --app-border: #334155;
+            --app-footer-bg: #0f172a;
+            --app-footer-text: #cbd5e1;
+            --app-overlay: rgba(2, 6, 23, 0.78);
+            --app-focus: #f2b629;
+            --app-header-bg: #381565;
+            --app-header-text: #ffffff;
+            --app-header-muted: #cbd5e1;
+            --app-header-border: rgba(107, 33, 168, 0.5);
+            --app-header-control-bg: rgba(15, 23, 42, 0.9);
+            --app-header-control-border: rgba(168, 85, 247, 0.3);
+            --app-header-control-hover: rgba(88, 28, 135, 0.58);
+            --app-header-shadow: 0 18px 38px -24px rgba(2, 6, 23, 0.92);
+        }
+        html {
+            min-width: 0;
+            background: var(--app-bg);
+            color-scheme: light;
+        }
+        html[data-theme="dark"] { color-scheme: dark; }
+        body {
+            font-family: 'Plus Jakarta Sans', 'Cairo', sans-serif;
+            background: var(--app-bg);
+            color: var(--app-text);
+            transition: background-color 0.3s, color 0.3s;
+            min-width: 0;
+            overflow-x: clip;
+        }
+        #app-main {
+            flex: 1 0 auto;
+            width: 100%;
+        }
+        button, input, select, textarea { font: inherit; }
+        input::placeholder, textarea::placeholder { color: #64748b; opacity: 1; }
+        [data-theme="dark"] input::placeholder,
+        [data-theme="dark"] textarea::placeholder { color: #94a3b8; }
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        [tabindex]:focus-visible {
+            outline: 3px solid var(--app-focus);
+            outline-offset: 2px;
+        }
+        button:disabled, input:disabled, select:disabled, textarea:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+        .ticker-animate {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker 25s linear infinite;
+        }
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        [dir="rtl"] .ticker-animate {
+            animation: ticker-rtl 25s linear infinite;
+        }
+        @keyframes ticker-rtl {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar-thumb { background: #381565; border-radius: 4px; }
+
+        .mobile-menu-button,
+        .mobile-nav-layer { display: none; }
+
+        .tv-presentation-exit {
+            display: none;
+            position: fixed;
+            margin: 0 !important;
+            top: max(0.75rem, env(safe-area-inset-top));
+            right: max(0.75rem, env(safe-area-inset-right));
+            z-index: 2147483647;
+            min-height: 44px;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        [dir="rtl"] .tv-presentation-exit {
+            right: auto;
+            left: max(0.75rem, env(safe-area-inset-left));
+        }
+        body.tv-presentation-active {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            background: var(--app-bg);
+        }
+        body.tv-presentation-active #app-header,
+        body.tv-presentation-active #mobile-nav-layer,
+        body.tv-presentation-active #smartdisplay-site-attribution,
+        body.tv-presentation-active #app-main > section:not(#view-tv) {
+            display: none !important;
+        }
+        body.tv-presentation-active #app-main {
+            max-width: none !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        #view-tv.tv-presentation-mode,
+        #view-tv:fullscreen {
+            display: flex !important;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            max-width: none;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: 0 !important;
+            overflow: hidden;
+            background: var(--app-bg);
+            color: var(--app-text);
+        }
+        #view-tv.tv-presentation-mode > :not([hidden]) ~ :not([hidden]),
+        #view-tv:fullscreen > :not([hidden]) ~ :not([hidden]) { margin-top: 0 !important; }
+        #view-tv.tv-presentation-mode #tv-status-bar,
+        #view-tv:fullscreen #tv-status-bar { display: none !important; }
+        #view-tv.tv-presentation-mode .tv-presentation-exit,
+        #view-tv:fullscreen .tv-presentation-exit { display: inline-flex; }
+        #view-tv.tv-presentation-mode #tv-display-frame,
+        #view-tv:fullscreen #tv-display-frame {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-height: 0;
+            border-radius: 0;
+            border-width: 0;
+        }
+        #view-tv.tv-presentation-mode #tv-display-frame > .tv-body-grid,
+        #view-tv:fullscreen #tv-display-frame > .tv-body-grid {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: auto;
+            overscroll-behavior: contain;
+        }
+        @media (min-width: 769px) {
+            #tv-status-bar {
+                position: relative;
+                padding-right: 10rem !important;
+            }
+            #tv-status-bar .tv-status-actions {
+                position: absolute;
+                top: 50%;
+                right: 0.75rem;
+                transform: translateY(-50%);
+            }
+            [dir="rtl"] #tv-status-bar {
+                padding-right: 0.75rem !important;
+                padding-left: 10rem !important;
+            }
+            [dir="rtl"] #tv-status-bar .tv-status-actions {
+                right: auto;
+                left: 0.75rem;
+            }
+            #view-tv.tv-presentation-mode #tv-display-frame > div:first-child,
+            #view-tv:fullscreen #tv-display-frame > div:first-child {
+                padding-right: 13.5rem !important;
+            }
+            [dir="rtl"] #view-tv.tv-presentation-mode #tv-display-frame > div:first-child,
+            [dir="rtl"] #view-tv:fullscreen #tv-display-frame > div:first-child {
+                padding-right: 1.5rem !important;
+                padding-left: 13.5rem !important;
+            }
+        }
+
+        #smartdisplay-site-attribution {
+            flex: 0 0 auto;
+            width: 100%;
+            margin-top: 1.5rem;
+            padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom));
+            border-top: 1px solid color-mix(in srgb, var(--app-border) 72%, transparent);
+            background: var(--app-footer-bg);
+            color: var(--app-footer-text);
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+    </style>
+</head>
+
+<body id="app-shell" class="min-h-screen selection:bg-brand-yellow selection:text-brand-darkPurple transition-colors duration-300 flex flex-col">
+
+    <header id="app-header" class="bg-[#381565] text-white border-b border-purple-800/50 sticky top-0 z-50 px-6 py-3 shadow-xl">
+        <div class="app-header-inner max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+
+            <!-- Logo & Title -->
+            <div class="brand-lockup flex items-center gap-4">
+                <div id="main-logo-container" class="bg-white/10 px-3.5 py-1.5 rounded-xl border border-[#f2b629]/40 flex items-center shadow-lg min-h-[44px]">
+                    <svg id="default-logo-svg" class="h-7 w-auto" role="img" aria-label="Logo placeholder" viewBox="0 0 330 65" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="8" width="62" height="48" rx="12" fill="#55417A"/><rect x="14" y="19" width="38" height="25" rx="4" stroke="#FFFFFF" stroke-width="3"/><path d="M24 39L31 31L37 36L44 27" stroke="#FFD166" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="79" y="39" fill="#F0EAFB" font-size="25" font-family="Arial,sans-serif" font-weight="700">YOUR LOGO</text></svg>
+                    <img id="custom-logo-img" class="h-8 w-auto hidden object-contain" alt="Custom Logo" onerror="resetDefaultLogo()">
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-white leading-none flex items-center gap-2">
+                        <span id="txt-app-title">Smart Display System</span>
+                        <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] px-2 py-0.5 rounded-full font-extrabold">LIVE</span>
+                    </h1>
+                    <p id="txt-app-subtitle" class="text-xs text-amber-200/90 mt-0.5">Live tasks and announcements</p>
+                </div>
+            </div>
+
+            <!-- Controls & View Switcher Tabs -->
+            <div class="desktop-control-cluster flex flex-wrap items-center gap-3">
+                
+                <!-- Day / Night Mode Switcher Button -->
+                <button onclick="toggleTheme()" id="theme-toggle-btn" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-3 py-1.5 rounded-xl shadow-lg text-xs flex items-center gap-1.5 transition transform active:scale-95 cursor-pointer" title="Switch Day/Night Mode">
+                    <i id="theme-icon" class="fa-solid fa-sun text-slate-950"></i>
+                    <span id="theme-label">Day Mode</span>
+                </button>
+
+                <!-- Language Selector Bar -->
+                <div class="header-control-group header-language-switcher flex bg-slate-900/90 p-1 rounded-xl border border-purple-500/30 text-xs font-bold">
+                    <button onclick="setLanguage('en')" id="lang-btn-en" class="px-2.5 py-1 rounded-lg transition text-brand-yellow bg-brand-purple shadow cursor-pointer">🇬🇧 EN</button>
+                    <button onclick="setLanguage('ar')" id="lang-btn-ar" class="px-2.5 py-1 rounded-lg transition text-slate-400 hover:text-white cursor-pointer">🇸🇦 عربي</button>
+                    <button onclick="setLanguage('ms')" id="lang-btn-ms" class="px-2.5 py-1 rounded-lg transition text-slate-400 hover:text-white cursor-pointer">🇲🇾 BM</button>
+                </div>
+
+                <!-- Navigation Views -->
+                <div class="header-control-group header-view-switcher flex bg-slate-900/90 p-1 rounded-xl border border-purple-500/30">
+                    <button id="btn-tv-view" onclick="switchView('tv')" class="app-nav-button flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-brand-purple text-white shadow cursor-pointer" aria-current="page">
+                        <i class="fa-solid fa-tv text-brand-yellow"></i> <span id="txt-tab-tv">TV Display View</span>
+                    </button>
+                    <button id="btn-admin-view" onclick="switchView('admin')" class="app-nav-button flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white cursor-pointer">
+                        <i class="fa-solid fa-user-gear"></i> <span id="txt-tab-admin">Admin Panel</span>
+                    </button>
+                    <button id="btn-sheets-view" onclick="switchView('sheets')" class="app-nav-button flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white cursor-pointer">
+                        <i class="fa-solid fa-file-excel text-emerald-400"></i> <span id="txt-tab-sheets">Google Sheets Sync</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <button id="mobile-menu-button" class="mobile-menu-button" type="button" onclick="openMobileNavigation()" aria-controls="mobile-nav-drawer" aria-expanded="false" aria-label="Open navigation menu">
+                <i class="fa-solid fa-bars" aria-hidden="true"></i>
+                <span>Menu</span>
+            </button>
+        </div>
+    </header>
+
+    <div id="mobile-nav-layer" class="mobile-nav-layer" aria-hidden="true">
+        <button id="mobile-nav-backdrop" class="mobile-nav-backdrop" type="button" onclick="closeMobileNavigation()" aria-label="Close navigation menu"></button>
+        <aside id="mobile-nav-drawer" class="mobile-nav-drawer" role="dialog" aria-modal="true" aria-label="Application navigation" tabindex="-1">
+            <div class="mobile-drawer-heading">
+                <div>
+                    <p class="mobile-drawer-kicker">SMART DISPLAY</p>
+                    <h2>Display controls</h2>
+                </div>
+                <button type="button" class="mobile-drawer-close" onclick="closeMobileNavigation()" aria-label="Close navigation menu">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <div class="mobile-drawer-section">
+                <p class="mobile-drawer-label">View</p>
+                <button id="mobile-btn-tv-view" onclick="switchView('tv')" class="app-nav-button mobile-drawer-action bg-brand-purple text-white shadow" aria-current="page">
+                    <i class="fa-solid fa-tv text-brand-yellow" aria-hidden="true"></i><span id="mobile-txt-tab-tv">TV Display View</span>
+                </button>
+                <button id="mobile-btn-admin-view" onclick="switchView('admin')" class="app-nav-button mobile-drawer-action">
+                    <i class="fa-solid fa-user-gear" aria-hidden="true"></i><span id="mobile-txt-tab-admin">Admin Panel</span>
+                </button>
+                <button id="mobile-btn-sheets-view" onclick="switchView('sheets')" class="app-nav-button mobile-drawer-action">
+                    <i class="fa-solid fa-file-excel text-emerald-400" aria-hidden="true"></i><span id="mobile-txt-tab-sheets">Google Sheets Sync</span>
+                </button>
+            </div>
+
+            <div class="mobile-drawer-section">
+                <p class="mobile-drawer-label">Appearance</p>
+                <button onclick="toggleTheme()" id="mobile-theme-toggle-btn" class="mobile-theme-action" type="button" title="Switch Day/Night Mode">
+                    <i id="mobile-theme-icon" class="fa-solid fa-sun" aria-hidden="true"></i>
+                    <span id="mobile-theme-label">Day Mode</span>
+                </button>
+            </div>
+
+            <div class="mobile-drawer-section">
+                <p class="mobile-drawer-label">Language</p>
+                <div class="mobile-language-grid" role="group" aria-label="Language">
+                    <button onclick="setLanguage('en')" id="mobile-lang-btn-en" class="mobile-language-button bg-brand-purple text-brand-yellow">🇬🇧 EN</button>
+                    <button onclick="setLanguage('ar')" id="mobile-lang-btn-ar" class="mobile-language-button">🇸🇦 عربي</button>
+                    <button onclick="setLanguage('ms')" id="mobile-lang-btn-ms" class="mobile-language-button">🇲🇾 BM</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-md pointer-events-none"></div>
+
+    <main id="app-main" class="max-w-7xl mx-auto p-6">
+
+        <!-- VIEW 1: TV BROADCAST DISPLAY -->
+        <section id="view-tv" class="space-y-4" aria-label="TV Display View">
+
+            <div id="tv-status-bar" class="bg-[#381565]/20 dark:bg-[#381565]/40 border border-purple-500/30 rounded-xl p-3 flex justify-between items-center text-xs text-slate-700 dark:text-purple-200">
+                <span class="flex items-center gap-2 font-semibold">
+                    <span class="relative flex h-2.5 w-2.5">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <span id="txt-tv-status-bar">TV Broadcast Active | 1080p Screen Simulation for Main Display</span>
+                </span>
+                
+                <div class="tv-status-actions flex items-center gap-2">
+                    <div id="tv-pagination-badge" class="hidden bg-amber-500/20 border border-amber-500/50 text-amber-600 dark:text-brand-yellow font-extrabold px-3 py-1 rounded-lg flex items-center gap-2">
+                        <i class="fa-solid fa-arrows-rotate fa-spin text-brand-yellow"></i>
+                        <span id="tv-page-indicator-text">Auto-rotating: Page 1 of 1</span>
+                    </div>
+                    <button id="enter-tv-presentation-btn" type="button" onclick="enterTvPresentation()" class="bg-[#381565] hover:bg-purple-800 text-white border border-purple-400/40 font-extrabold px-3.5 py-1.5 rounded-xl shadow-lg flex items-center gap-2 text-xs transition transform active:scale-95 cursor-pointer" title="Show only the TV display and enter browser fullscreen where supported">
+                        <i class="fa-solid fa-expand" aria-hidden="true"></i>
+                        <span id="txt-enter-fullscreen">Full Screen</span>
+                    </button>
+                </div>
+            </div>
+             
+            <!-- Simulated TV Frame -->
+            <div id="tv-display-frame" class="tv-display-frame bg-slate-100 dark:bg-slate-950 border-4 border-[#381565] rounded-2xl shadow-2xl overflow-hidden relative text-slate-900 dark:text-slate-100">
+                
+                <!-- TV Header -->
+                <div id="tv-brand-bar" class="bg-gradient-to-r from-[#210b3e] via-[#381565] to-[#16072b] p-6 border-b border-purple-500/30 flex justify-between items-center text-white">
+                    <div class="flex items-center gap-4">
+                        <div id="tv-logo-container" class="bg-slate-950/90 p-2 rounded-xl border border-[#f2b629]/40 shadow-xl min-h-[48px] flex items-center">
+                            <svg id="tv-default-logo-svg" class="h-7 w-auto" role="img" aria-label="Logo placeholder" viewBox="0 0 330 65" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="8" width="62" height="48" rx="12" fill="#55417A"/><rect x="14" y="19" width="38" height="25" rx="4" stroke="#FFFFFF" stroke-width="3"/><path d="M24 39L31 31L37 36L44 27" stroke="#FFD166" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="79" y="39" fill="#F0EAFB" font-size="25" font-family="Arial,sans-serif" font-weight="700">YOUR LOGO</text></svg>
+                            <img id="tv-custom-logo-img" class="h-9 w-auto hidden object-contain" alt="Custom Logo" onerror="resetDefaultLogo()">
+                        </div>
+                        <div>
+                            <h2 id="tv-day-title" class="text-2xl font-black text-white">Today's Schedule - Saturday</h2>
+                            <p id="tv-dept-sub" class="text-amber-200/90 text-xs mt-0.5">Shared announcements and tasks</p>
+                        </div>
+                    </div>
+
+                    <!-- Live Date & Clock -->
+                    <div id="tv-clock-panel" class="text-right rtl:text-left bg-black/60 px-5 py-2 rounded-xl border border-purple-500/30">
+                        <div id="live-clock" class="text-2xl font-black text-[#f2b629] tracking-wider">--:--:--</div>
+                        <div id="live-date" class="text-[11px] text-slate-300 font-semibold">Today</div>
+                    </div>
+                </div>
+
+                <!-- Ticker Banner -->
+                <div class="bg-[#f2b629] text-[#210b3e] font-bold px-4 py-2 flex items-center gap-3 border-b border-amber-500 shadow-inner">
+                    <span class="bg-[#381565] text-white text-xs px-3 py-1 rounded-md font-black shrink-0 flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-bullhorn text-[#f2b629]"></i>
+                        <span id="txt-ticker-badge">URGENT ANNOUNCEMENT</span>
+                    </span>
+                    <div class="overflow-hidden relative w-full text-xs md:text-sm font-extrabold">
+                        <span id="tv-ticker-text" class="inline-block">Welcome! Add announcements in the Admin Panel.</span>
+                    </div>
+                </div>
+
+                <!-- Main TV Body Grid -->
+                <div class="tv-body-grid p-6 md:p-8 grid grid-cols-12 gap-6 min-h-[490px]">
+                    
+                    <!-- Left Column: Daily Tasks -->
+                    <div class="col-span-12 lg:col-span-8 space-y-4">
+                        <div class="flex justify-between items-center mb-1">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-[#381565] dark:text-[#f2b629]"></i>
+                                <span id="txt-tasks-header">Scheduled Tasks & Duties</span>
+                            </h3>
+                            <div class="flex items-center gap-2">
+                                <span id="tv-task-count" class="bg-[#381565] text-amber-300 text-xs px-3 py-1 rounded-full font-semibold">
+                                    0 Tasks Scheduled
+                                </span>
+                            </div>
+                        </div>
+
+                        <div id="tv-tasks-container" class="space-y-4 min-h-[360px] flex flex-col justify-start">
+                            <!-- Tasks rendered dynamically with large optional images -->
+                        </div>
+
+                        <div id="tv-page-dots" class="flex justify-center items-center gap-2 pt-2 hidden">
+                            <!-- Page dots rendered dynamically -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TV Footer Bar -->
+                <div class="bg-slate-200 dark:bg-slate-900/90 border-t border-purple-900/30 px-6 py-2.5 flex justify-between items-center text-xs text-slate-600 dark:text-slate-400">
+                    <div class="flex items-center gap-4">
+                        <span><i class="fa-solid fa-tv text-[#381565] dark:text-[#f2b629]"></i> <span id="txt-footer-screen">Screen: Main TV</span></span>
+                        <span><i class="fa-solid fa-arrows-rotate text-purple-600 dark:text-purple-400"></i> <span id="txt-footer-sync">Auto-Sync Active</span></span>
+                    </div>
+                    <div>
+                        <span class="text-[#381565] dark:text-purple-300 font-bold">SMART DISPLAY Smart Display System v3.5</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <button id="exit-tv-presentation-btn" class="tv-presentation-exit bg-slate-950/90 hover:bg-slate-900 text-white border border-amber-400/70 px-4 py-2 rounded-xl shadow-2xl text-sm font-extrabold cursor-pointer" type="button" onclick="exitTvPresentation()" aria-label="Exit Full Screen">
+                <i class="fa-solid fa-compress" aria-hidden="true"></i>
+                <span id="txt-exit-fullscreen">Exit Full Screen</span>
+            </button>
+        </section>
+
+        <!-- VIEW 2: ADMIN & HR PANEL -->
+        <section id="view-admin" class="hidden space-y-6">
+            
+            <div class="bg-white dark:bg-brand-darkPurple border-2 border-[#381565]/40 rounded-2xl p-6 shadow-2xl text-slate-900 dark:text-white transition-colors duration-300">
+                
+                <div class="flex flex-wrap justify-between items-center gap-4 border-b-2 border-[#381565]/20 dark:border-purple-800/80 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-black text-[#381565] dark:text-[#f2b629] flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span id="txt-admin-title">Easy Control Panel</span>
+                        </h2>
+                        <p id="txt-admin-desc" class="text-slate-600 dark:text-purple-200 text-xs mt-1 font-semibold">
+                            Easy way to add and manage tasks. Changes appear live on TV!
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-3 bg-amber-500/10 dark:bg-slate-900 p-2.5 rounded-2xl border-2 border-[#f2b629]">
+                        <label id="txt-select-day-label" class="text-sm font-black text-[#381565] dark:text-[#f2b629] flex items-center gap-1">
+                            <i class="fa-solid fa-calendar-day"></i> Select Day:
+                        </label>
+                        <select id="admin-day-select" data-global-day-select onchange="changeActiveDay(this.value)" class="bg-[#381565] text-white font-extrabold text-sm px-4 py-2 rounded-xl focus:outline-none cursor-pointer">
+                            <!-- Filled dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 3 STEPS GRID -->
+                <div class="grid grid-cols-12 gap-6">
+                    
+                    <!-- STEP 1: ADD TASK -->
+                    <div class="col-span-12 lg:col-span-5 bg-slate-50 dark:bg-slate-900/90 border-2 border-[#381565]/30 p-5 rounded-2xl space-y-4 shadow-md">
+                        <div class="flex items-center gap-2 border-b pb-2 border-slate-200 dark:border-slate-800">
+                            <span class="bg-[#f2b629] text-[#381565] font-black w-8 h-8 rounded-full flex items-center justify-center text-lg">1</span>
+                            <h3 class="text-base font-black text-[#381565] dark:text-[#f2b629] flex items-center gap-2">
+                                <i class="fa-solid fa-plus-circle"></i>
+                                <span id="txt-add-heading">Add New Task</span>
+                            </h3>
+                        </div>
+
+                        <form id="add-task-form" onsubmit="handleAddTask(event)" class="space-y-4 text-xs font-bold">
+                            <div>
+                                <label id="lbl-task-title" class="block text-slate-700 dark:text-slate-300 mb-1 text-sm">Task Title</label>
+                                <input type="text" id="task-title" required placeholder="e.g. Call Prospective Students" class="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white focus:border-[#f2b629] focus:outline-none shadow-sm">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label id="lbl-task-dept" class="block text-slate-700 dark:text-slate-300 mb-1">Department</label>
+                                    <select id="task-dept" class="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none">
+                                        <!-- Options filled dynamically -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label id="lbl-task-priority" class="block text-slate-700 dark:text-slate-300 mb-1">Priority</label>
+                                    <select id="task-priority" class="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none">
+                                        <!-- Options filled dynamically -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label id="lbl-task-time" class="block text-slate-700 dark:text-slate-300 mb-1">Time / Deadline</label>
+                                <input type="text" id="task-time" placeholder="e.g. 09:00 AM - 12:00 PM" class="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label id="lbl-task-desc" class="block text-slate-700 dark:text-slate-300 mb-1">Details</label>
+                                <textarea id="task-desc" rows="2" placeholder="Simple notes displayed under task..." class="w-full bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none"></textarea>
+                            </div>
+
+                            <!-- TASK IMAGE ATTACHMENT FIELD (OPTIONAL & VISIBLE FROM DISTANCE) -->
+                            <div class="bg-amber-500/10 dark:bg-slate-800/80 p-3 rounded-xl border border-amber-500/40 space-y-2">
+                                <label id="lbl-task-image" class="block text-xs font-extrabold text-[#381565] dark:text-[#f2b629] flex items-center justify-between">
+                                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-image text-amber-500"></i> Task Image / Diagram (Optional)</span>
+                                    <span class="text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-300 px-2 py-0.5 rounded-md">TV Distance View</span>
+                                </label>
+                                
+                                <div class="flex items-center gap-2">
+                                    <input type="file" id="task-image-file" accept="image/*" class="hidden" onchange="handleTaskImageUpload(event)">
+                                    <button type="button" onclick="document.getElementById('task-image-file').click()" class="bg-purple-700 hover:bg-purple-600 text-white px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow cursor-pointer shrink-0">
+                                        <i class="fa-solid fa-paperclip"></i>
+                                        <span id="btn-upload-task-img">Attach Image File</span>
+                                    </button>
+                                    <input type="text" id="task-image-url" placeholder="Or paste image URL (https://...)" class="flex-grow bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-2 text-xs text-slate-900 dark:text-white focus:outline-none">
+                                </div>
+                                <div id="task-img-preview-box" class="hidden relative mt-2 rounded-lg overflow-hidden border border-purple-500/30 max-h-32 bg-slate-950 flex justify-center items-center">
+                                    <img id="task-img-preview" src="" class="max-h-28 object-contain" alt="Preview">
+                                    <button type="button" onclick="removeTaskImagePreview()" class="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-1 text-[10px] w-6 h-6 flex items-center justify-center cursor-pointer shadow" title="Remove Image">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-[#f2b629] hover:bg-amber-400 text-[#381565] font-black py-3.5 rounded-xl shadow-lg transition flex justify-center items-center gap-2 text-base transform active:scale-95 cursor-pointer">
+                                <i class="fa-solid fa-paper-plane text-lg"></i>
+                                <span id="btn-submit-task">Publish Task Live</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- STEP 2, 3, & 4 -->
+                    <div class="col-span-12 lg:col-span-7 space-y-5">
+                        
+                        <!-- Registered Tasks Box -->
+                        <div class="bg-slate-50 dark:bg-slate-900/90 border-2 border-[#381565]/30 p-5 rounded-2xl space-y-3 shadow-md">
+                            <div class="flex justify-between items-center border-b pb-2 border-slate-200 dark:border-slate-800">
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-[#381565] text-white font-black w-8 h-8 rounded-full flex items-center justify-center text-lg">2</span>
+                                    <h3 class="text-base font-black text-slate-900 dark:text-white">
+                                        <span id="txt-step2-prefix">Tasks for</span> <span id="admin-current-day-label" class="text-[#381565] dark:text-[#f2b629] font-black">Saturday</span>
+                                    </h3>
+                                </div>
+                                
+                            </div>
+
+                            <div id="admin-tasks-list" class="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Supervisors, Directives, Ticker & Logo Section -->
+                        <div class="bg-slate-50 dark:bg-slate-900/90 border-2 border-[#381565]/30 p-5 rounded-2xl space-y-4 shadow-md">
+                            
+                            <!-- Dynamic Compliance Directives Section -->
+                            <div class="space-y-2.5">
+                                <div class="flex justify-between items-center border-b pb-2 border-slate-200 dark:border-slate-800">
+                                    <div class="flex items-center gap-2">
+                                        <span class="bg-amber-500 text-slate-950 font-black w-8 h-8 rounded-full flex items-center justify-center text-lg">3</span>
+                                        <h3 class="text-sm font-black text-slate-900 dark:text-[#f2b629] flex items-center gap-2">
+                                            <i class="fa-solid fa-shield-halved"></i>
+                                            <span id="txt-edit-directives-heading">Compliance Directives</span>
+                                        </h3>
+                                    </div>
+                                    <button onclick="addNewDirectiveRow()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow transform active:scale-95 cursor-pointer">
+                                        <i class="fa-solid fa-plus text-sm"></i>
+                                        <span id="btn-add-directive">+ Add Directive</span>
+                                    </button>
+                                </div>
+
+                                <div id="admin-directives-editor-list" class="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                                    <!-- Directives Editor rendered dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Supervisors Section -->
+                            <div class="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2.5">
+                                <div class="flex justify-between items-center border-b pb-2 border-slate-200 dark:border-slate-800">
+                                    <div class="flex items-center gap-2">
+                                        <span class="bg-emerald-500 text-slate-950 font-black w-8 h-8 rounded-full flex items-center justify-center text-lg">4</span>
+                                        <h3 class="text-sm font-black text-slate-900 dark:text-[#f2b629] flex items-center gap-2">
+                                            <i class="fa-solid fa-user-tie"></i>
+                                            <span id="txt-edit-supervisors-heading">Supervisors On Duty</span>
+                                        </h3>
+                                    </div>
+                                    <button onclick="addNewSupervisorRow()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow transform active:scale-95 cursor-pointer">
+                                        <i class="fa-solid fa-plus text-sm"></i>
+                                        <span id="btn-add-supervisor">+ Add Supervisor</span>
+                                    </button>
+                                </div>
+
+                                <div id="admin-supervisors-editor-list" class="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Urgent Moving Ticker Banner Edit -->
+                            <div class="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                                <h4 class="text-xs font-black text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                                    <i class="fa-solid fa-bullhorn"></i>
+                                    <span id="txt-edit-ticker-heading">Edit Moving Ticker</span>
+                                </h4>
+                                <div class="flex gap-2">
+                                    <input type="text" id="admin-ticker-input" value="Welcome! Add announcements in the Admin Panel." class="flex-grow bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none">
+                                    <button onclick="updateTickerText()" class="bg-[#381565] hover:bg-purple-800 text-white font-black px-4 py-2 rounded-xl text-xs shrink-0 cursor-pointer shadow">
+                                        <span id="btn-update-ticker">Update Ticker</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Custom Logo Upload Area -->
+                            <div class="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                                <h4 class="text-xs font-black text-[#381565] dark:text-[#f2b629] flex items-center gap-2">
+                                    <i class="fa-solid fa-image"></i>
+                                    <span id="txt-edit-logo-heading">Upload Logo</span>
+                                </h4>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <input type="file" id="logo-file-input" accept="image/*" class="hidden" onchange="handleLogoFileUpload(event)">
+                                    <button onclick="document.getElementById('logo-file-input').click()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow cursor-pointer">
+                                        <i class="fa-solid fa-upload"></i>
+                                        <span id="btn-upload-logo-file">Upload Logo File</span>
+                                    </button>
+                                    <button onclick="resetDefaultLogo()" class="bg-slate-300 dark:bg-slate-800 text-slate-800 dark:text-slate-300 font-bold px-3 py-2 rounded-xl text-xs shrink-0 hover:bg-slate-400 cursor-pointer">
+                                        <span id="btn-reset-logo">Reset Original Logo</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </section>
+
+        <!-- VIEW 3: GOOGLE SHEETS SYNC -->
+        <section id="view-sheets" class="hidden space-y-6">
+            <div class="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6 text-slate-800 dark:text-slate-200 shadow-2xl">
+                
+                <div class="border-b border-slate-200 dark:border-slate-800 pb-4 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold text-[#381565] dark:text-white flex items-center gap-2">
+                            <i class="fa-file-excel text-emerald-500"></i>
+                            <span>Google Sheets Synchronization</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Connect your Google Sheet so HR & Managers can add tasks directly from mobile!</p>
+                    </div>
+                    <span class="bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/40 text-xs px-3 py-1 rounded-full font-bold">Recommended</span>
+                </div>
+
+                <div class="bg-slate-100 dark:bg-slate-950 p-5 rounded-xl border border-emerald-500/30 space-y-3">
+                    <h3 class="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                        <i class="fa-solid fa-link"></i> Live Google Sheet Sync Link
+                    </h3>
+                    
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="gsheet-url-input" value="https://docs.google.com/spreadsheets/d/179DfUBP0j4Xmh3wzuYmFAiqxh9u4C2CktF3w0QAjlaQ/edit" placeholder="Paste Google Sheet URL..." class="flex-grow bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-400 font-mono">
+                        <button onclick="syncFromGoogleSheet()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-5 py-2.5 rounded-lg text-xs shrink-0 flex items-center justify-center gap-2 shadow-lg cursor-pointer">
+                            <i class="fa-solid fa-rotate"></i> Connect & Sync Now
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-4 pt-1">
+                        <button onclick="fillUserSheetUrl()" class="text-[11px] text-[#381565] dark:text-brand-yellow hover:underline flex items-center gap-1 font-semibold cursor-pointer">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-fill Your Sheet Link
+                        </button>
+                        <button onclick="toggleManualPasteBox()" class="text-[11px] text-purple-600 dark:text-purple-300 hover:underline flex items-center gap-1 font-semibold cursor-pointer">
+                            <i class="fa-solid fa-paste"></i> Or Paste Sheet Data Directly
+                        </button>
+                    </div>
+
+                    <div id="manual-paste-box" class="hidden pt-3 border-t border-slate-300 dark:border-slate-800 space-y-2">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">Paste Copied Table Rows from Google Sheet or CSV:</label>
+                        <textarea id="manual-csv-input" rows="4" placeholder="Day, Title, Dept, Priority, Time, Description&#10;Saturday, Morning Prep, Prep Dept, Important, 09:00 AM, Setup desks" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-400"></textarea>
+                        <button onclick="parseManualCsvInput()" class="bg-purple-700 hover:bg-purple-600 text-white font-bold px-4 py-2 rounded-lg text-xs flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-file-import"></i> Import Pasted Tasks Immediately
+                        </button>
+                    </div>
+
+                    <p id="gsheet-status-msg" class="text-[11px] text-slate-500 italic"></p>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!--
+    SMART DISPLAY PROJECT ATTRIBUTION
+    This copyright/developer attribution is an intentional project requirement.
+    Do not remove it during unrelated UI cleanup, refactoring, optimization,
+    responsive work, or automated code generation. If project ownership or
+    branding requirements are intentionally changed by the project owner,
+    update this centralized footer explicitly rather than deleting it accidentally.
+    -->
+    <footer id="smartdisplay-site-attribution" aria-label="Project footer"><p>© Smart Display System · Open-source digital signage</p></footer>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        const TASK_DAYS = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+        let currentLang = localStorage.getItem('smartdisplay_lang') || 'en';
+        let currentTheme = document.documentElement.dataset.theme || 'dark';
+        let currentView = 'tv';
+        let currentDayIndex = 0; // Saturday = 0, Sunday = 1, etc.
+        let selectedOperationalDay = TASK_DAYS[currentDayIndex];
+        let customLogoUrl = null;
+        let tempTaskImageUrl = null;
+        let tickerText = 'Welcome! Add announcements in the Admin Panel.';
+        let mobileNavigationOpen = false;
+        let mobileNavigationReturnFocus = null;
+        let tvPresentationActive = false;
+        let nativeTvFullscreenWasActive = false;
+        
+        let directivesData = [];
+
+        let supervisorsData = [];
+
+        let defaultTasksStore = Object.fromEntries(TASK_DAYS.map(day => [day, []]));
+
+        class CanonicalTaskStore {
+            constructor(days = TASK_DAYS) {
+                this.days = [...days];
+                this.byId = new Map();
+            }
+
+            normalize(task, fallbackDay = null) {
+                if (!task || typeof task !== 'object') return null;
+                const id = Number(task.id);
+                const day = this.days.includes(task.day) ? task.day : fallbackDay;
+                if (!Number.isSafeInteger(id) || id <= 0 || !this.days.includes(day)) return null;
+                return { ...task, id, day };
+            }
+
+            replaceSnapshot(tasks) {
+                const fresh = new Map();
+                if (Array.isArray(tasks)) {
+                    tasks.forEach(task => {
+                        const normalized = this.normalize(task);
+                        if (normalized) fresh.set(normalized.id, normalized);
+                    });
+                } else if (tasks && typeof tasks === 'object') {
+                    this.days.forEach(day => {
+                        const dayTasks = Array.isArray(tasks[day]) ? tasks[day] : [];
+                        dayTasks.forEach(task => {
+                            const normalized = this.normalize(task, day);
+                            if (normalized) fresh.set(normalized.id, normalized);
+                        });
+                    });
+                }
+                this.byId = fresh;
+                return this;
+            }
+
+            upsertTask(task) {
+                const normalized = this.normalize(task);
+                if (!normalized) return false;
+                this.byId.set(normalized.id, normalized);
+                return true;
+            }
+
+            deleteTask(id) {
+                const normalizedId = Number(id);
+                if (!Number.isSafeInteger(normalizedId) || normalizedId <= 0) return false;
+                return this.byId.delete(normalizedId);
+            }
+
+            get(id) {
+                return this.byId.get(Number(id));
+            }
+
+            toDayObject() {
+                const derived = Object.fromEntries(this.days.map(day => [day, []]));
+                [...this.byId.values()]
+                    .sort((left, right) => left.id - right.id)
+                    .forEach(task => derived[task.day].push({ ...task }));
+                return derived;
+            }
+
+            get size() {
+                return this.byId.size;
+            }
+        }
+
+        const canonicalTaskState = new CanonicalTaskStore();
+        let tasksData = canonicalTaskState.toDayObject();
+
+        const translations = {
+            en: {
+                dir: 'ltr',
+                days: ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                appTitle: "Smart Display System",
+                appSub: "Live tasks and announcements",
+                tabTv: "TV Display View",
+                tabAdmin: "Admin Panel",
+                tabSheets: "Google Sheets Sync",
+                enterFullscreen: "Full Screen",
+                exitFullscreen: "Exit Full Screen",
+                tvStatusBar: "TV Broadcast Active | 1080p Screen Simulation for Main Display",
+                tvDayTitlePrefix: "Today's Schedule - ",
+                tvDeptSub: "Shared announcements and tasks",
+                tickerBadge: "URGENT ANNOUNCEMENT",
+                tasksHeader: "Scheduled Tasks & Duties",
+                directivesTitle: "Compliance Directives",
+                supervisorsTitle: "Supervisors On Duty",
+                progressLabel: "Daily Progress",
+                footerScreen: "Screen: Main TV",
+                footerSync: "Auto-Sync Active",
+                adminTitle: "Easy Control Panel",
+                adminDesc: "Easy way to add and manage tasks. Changes appear live on TV!",
+                selectDayLabel: "Select Day:",
+                addHeading: "Add New Task",
+                lblTaskTitle: "Task Title",
+                lblTaskDept: "Department",
+                lblTaskPriority: "Priority",
+                lblTaskTime: "Time / Deadline",
+                lblTaskDesc: "Details",
+                lblTaskImage: "Task Image / Diagram (Optional)",
+                btnUploadTaskImg: "Attach Image File",
+                btnSubmitTask: "Publish Task Live",
+                step2Prefix: "Tasks for",
+                btnResetTasks: "Reset Default Tasks",
+                noTasksMsg: "No tasks scheduled for this day. Add one above.",
+                editDirectivesHeading: "Compliance Directives",
+                btnAddDirective: "+ Add Directive",
+                directivePlaceholder: "Enter compliance directive...",
+                editSupervisorsHeading: "Supervisors On Duty",
+                btnAddSupervisor: "+ Add Supervisor",
+                editTickerHeading: "Edit Moving Ticker",
+                btnUpdateTicker: "Update Ticker",
+                editLogoHeading: "Upload Logo",
+                btnUploadLogoFile: "Upload Logo File",
+                btnResetLogo: "Reset Original Logo",
+                taskDoneStatus: "✅ Completed",
+                taskPendingStatus: "⏳ Pending",
+                rolePlaceholder: "Role (e.g. Sales Lead)",
+                namePlaceholder: "Name (e.g. Team Lead)",
+                deptOptions: [
+                    { value: "Operations", text: "Sales Department" },
+                    { value: "Facilities", text: "Preparation Department" },
+                    { value: "People", text: "Human Resources (HR)" },
+                    { value: "General Office", text: "General Office" }
+                ],
+                priorityOptions: [
+                    { value: "Normal", text: "Normal (Blue)" },
+                    { value: "Important", text: "Important (Yellow)" },
+                    { value: "Urgent", text: "Urgent (Red)" }
+                ]
+            },
+            ar: {
+                dir: 'rtl',
+                days: ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"],
+                appTitle: "شاشة العرض الذكية - مكتب Main",
+                appSub: "نظام بث المهام والالتزام التنظيمي المركزي",
+                tabTv: "واجهة عرض الشاشة TV",
+                tabAdmin: "لوحة التحكم المبسطة",
+                tabSheets: "مزامنة Google Sheets",
+                enterFullscreen: "ملء الشاشة",
+                exitFullscreen: "الخروج من ملء الشاشة",
+                tvStatusBar: "البث المباشر نشط | شاشة مكتب Main بدقة 1080p",
+                tvDayTitlePrefix: "جدول مهام اليوم - ",
+                tvDeptSub: "توجيهات قسم المبيعات والتحضير والموارد البشرية - مكتب Main",
+                tickerBadge: "تنبيه هام وعاجل",
+                tasksHeader: "قائمة المهام والواجبات اليومية",
+                directivesTitle: "تعليمات الالتزام والأنظمة",
+                supervisorsTitle: "المشرفون المسؤولون اليوم",
+                progressLabel: "معدل الإنجاز اليومي",
+                footerScreen: "الشاشة: Main TV",
+                footerSync: "المزامنة التلقائية نشطة",
+                adminTitle: "لوحة التحكم المبسطة",
+                adminDesc: "أسهل طريقة لإضافة وتعديل مهام الشاشة. التعديلات تظهر فوراً على التلفزيون!",
+                selectDayLabel: "اختر اليوم:",
+                addHeading: "إضافة مهمة جديدة",
+                lblTaskTitle: "اسم المهمة",
+                lblTaskDept: "القسم",
+                lblTaskPriority: "مستوى الأهمية",
+                lblTaskTime: "التوقيت / الموعد",
+                lblTaskDesc: "تفاصيل إضافية",
+                lblTaskImage: "صورة / مخطط المهمة (اختياري - للعرض المكبر)",
+                btnUploadTaskImg: "إرفاق صورة من الجهاز",
+                btnSubmitTask: "نشر المهمة فوراً على الشاشة",
+                step2Prefix: "مهام يوم",
+                btnResetTasks: "إعادة المهام الافتراضية",
+                noTasksMsg: "لا توجد مهام لهذا اليوم. أضف واحدة أعلاه.",
+                editDirectivesHeading: "تعليمات الالتزام والأنظمة",
+                btnAddDirective: "+ إضافة تعليمات",
+                directivePlaceholder: "اكتب تعليمات الالتزام...",
+                editSupervisorsHeading: "المشرفون المسؤولون",
+                btnAddSupervisor: "+ إضافة مشرف",
+                editTickerHeading: "تعديل الشريط الإخباري المتحرك",
+                btnUpdateTicker: "تحديث الشريط",
+                editLogoHeading: "رفع وتغيير الشعار",
+                btnUploadLogoFile: "رفع شعار من الحاسوب",
+                btnResetLogo: "إعادة الشعار الأصلي",
+                taskDoneStatus: "✅ تم الإنجاز",
+                taskPendingStatus: "⏳ قيد الانتظار",
+                rolePlaceholder: "الدور (مثال: مسؤول المبيعات)",
+                namePlaceholder: "الاسم (مثال: أ. هشام)",
+                deptOptions: [
+                    { value: "Operations", text: "قسم المبيعات" },
+                    { value: "Facilities", text: "قسم التحضير" },
+                    { value: "People", text: "الموارد البشرية (HR)" },
+                    { value: "General Office", text: "عام" }
+                ],
+                priorityOptions: [
+                    { value: "Normal", text: "عادي (أزرق)" },
+                    { value: "Important", text: "هام (أصفر)" },
+                    { value: "Urgent", text: "عاجل (أحمر)" }
+                ]
+            },
+            ms: {
+                dir: 'ltr',
+                days: ["Sabtu", "Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat"],
+                appTitle: "Paparan Penyiaran Pintar - Pejabat Main",
+                appSub: "Sistem Paparan Tugasan & Kepatuhan Pusat",
+                tabTv: "Paparan Skrin TV",
+                tabAdmin: "Panel Kawalan Mudah",
+                tabSheets: "Integrasi Google Sheets",
+                enterFullscreen: "Skrin Penuh",
+                exitFullscreen: "Keluar Skrin Penuh",
+                tvStatusBar: "Siaran TV Aktif | Simulasi Skrin 1080p Pejabat Main",
+                tvDayTitlePrefix: "Jadual Hari Ini - ",
+                tvDeptSub: "Arahan Jualan, Penyediaan & HR - Pejabat Main",
+                tickerBadge: "PENGUMUMAN SEGERA",
+                tasksHeader: "Tugasan & Kewajipan Dijadualkan",
+                directivesTitle: "Arahan Kepatuhan",
+                supervisorsTitle: "Penyelia Bertugas",
+                progressLabel: "Kemajuan Harian",
+                footerScreen: "Skrin: Main TV",
+                footerSync: "Auto-Masa Aktif",
+                adminTitle: "Panel Kawalan Mudah",
+                adminDesc: "Cara mudah menambah dan mengurus tugasan. Perubahan disiarkan secara langsung!",
+                selectDayLabel: "Pilih Hari:",
+                addHeading: "Tambah Tugasan Baharu",
+                lblTaskTitle: "Tajuk Tugasan",
+                lblTaskDept: "Jabatan",
+                lblTaskPriority: "Tahap Keutamaan",
+                lblTaskTime: "Masa / Tarikh Akhir",
+                lblTaskDesc: "Butiran",
+                lblTaskImage: "Imej / Gambar Tugasan (Pilihan)",
+                btnUploadTaskImg: "Muat Naik Fail Imej",
+                btnSubmitTask: "Siarkan Tugasan ke TV",
+                step2Prefix: "Tugasan Hari",
+                btnResetTasks: "Set Semula Tugasan",
+                noTasksMsg: "Tiada tugasan dijadualkan hari ini. Tambah satu di atas.",
+                editDirectivesHeading: "Arahan Kepatuhan",
+                btnAddDirective: "+ Tambah Arahan",
+                directivePlaceholder: "Masukkan arahan kepatuhan...",
+                editSupervisorsHeading: "Penyelia Bertugas",
+                btnAddSupervisor: "+ Tambah Penyelia",
+                editTickerHeading: "Sunting Banner Bergerak",
+                btnUpdateTicker: "Kemaskini Banner",
+                editLogoHeading: "Muat Naik Logo",
+                btnUploadLogoFile: "Muat Naik Logo Dari Komputer",
+                btnResetLogo: "Set Semula Logo Asal",
+                taskDoneStatus: "✅ Selesai",
+                taskPendingStatus: "⏳ Dalam Proses",
+                rolePlaceholder: "Peranan (Cth: Ketua Jualan)",
+                namePlaceholder: "Nama (Cth: En. Hisham)",
+                deptOptions: [
+                    { value: "Operations", text: "Jabatan Jualan" },
+                    { value: "Facilities", text: "Jabatan Penyediaan" },
+                    { value: "People", text: "Sumber Manusia (HR)" },
+                    { value: "General Office", text: "Pejabat Am" }
+                ],
+                priorityOptions: [
+                    { value: "Normal", text: "Biasa (Biru)" },
+                    { value: "Important", text: "Penting (Kuning)" },
+                    { value: "Urgent", text: "Segera (Merah)" }
+                ]
+            }
+        };
+
+        function safeSetText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `p-3.5 rounded-xl shadow-2xl text-xs font-bold flex items-center gap-2 transition transform translate-y-2 pointer-events-auto ${type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}`;
+            toast.innerHTML = `<i class="${type === 'success' ? 'fa-solid fa-circle-check' : 'fa-solid fa-triangle-exclamation'} text-sm"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function setMobileNavigation(open) {
+            const shouldOpen = Boolean(open) && window.matchMedia('(max-width: 768px)').matches && !tvPresentationActive;
+            const layer = document.getElementById('mobile-nav-layer');
+            const drawer = document.getElementById('mobile-nav-drawer');
+            const trigger = document.getElementById('mobile-menu-button');
+            if (!layer || !drawer || !trigger) return;
+
+            if (shouldOpen && !mobileNavigationOpen) mobileNavigationReturnFocus = document.activeElement;
+            mobileNavigationOpen = shouldOpen;
+            layer.classList.toggle('is-open', shouldOpen);
+            layer.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
+            trigger.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+            document.body.classList.toggle('mobile-nav-open', shouldOpen);
+
+            if (shouldOpen) {
+                requestAnimationFrame(() => drawer.focus({ preventScroll: true }));
+            } else if (mobileNavigationReturnFocus && typeof mobileNavigationReturnFocus.focus === 'function') {
+                mobileNavigationReturnFocus.focus({ preventScroll: true });
+                mobileNavigationReturnFocus = null;
+            }
+        }
+
+        function openMobileNavigation() { setMobileNavigation(true); }
+        function closeMobileNavigation() { setMobileNavigation(false); }
+
+        function setTvPresentation(active) {
+            const surface = document.getElementById('view-tv');
+            if (!surface) return;
+            tvPresentationActive = Boolean(active);
+            if (tvPresentationActive) closeMobileNavigation();
+            surface.classList.toggle('tv-presentation-mode', tvPresentationActive);
+            document.body.classList.toggle('tv-presentation-active', tvPresentationActive);
+            document.documentElement.classList.toggle('tv-presentation-active', tvPresentationActive);
+            const enterButton = document.getElementById('enter-tv-presentation-btn');
+            const exitButton = document.getElementById('exit-tv-presentation-btn');
+            if (enterButton) enterButton.setAttribute('aria-pressed', tvPresentationActive ? 'true' : 'false');
+            if (exitButton) exitButton.setAttribute('aria-hidden', tvPresentationActive ? 'false' : 'true');
+        }
+
+        async function enterTvPresentation() {
+            const surface = document.getElementById('view-tv');
+            if (!surface) return;
+            setTvPresentation(true);
+            if (typeof surface.requestFullscreen !== 'function') return;
+            try {
+                await surface.requestFullscreen({ navigationUI: 'hide' });
+                nativeTvFullscreenWasActive = document.fullscreenElement === surface;
+            } catch (_) {
+                // Presentation mode is the supported fallback when native fullscreen is unavailable or rejected.
+                nativeTvFullscreenWasActive = false;
+            }
+        }
+
+        async function exitTvPresentation() {
+            nativeTvFullscreenWasActive = false;
+            if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
+                try { await document.exitFullscreen(); } catch (_) { /* Keep the UI exit reliable. */ }
+            }
+            setTvPresentation(false);
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            const surface = document.getElementById('view-tv');
+            if (document.fullscreenElement === surface) {
+                nativeTvFullscreenWasActive = true;
+                setTvPresentation(true);
+            } else if (nativeTvFullscreenWasActive) {
+                nativeTvFullscreenWasActive = false;
+                setTvPresentation(false);
+            }
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key !== 'Escape') return;
+            if (mobileNavigationOpen) closeMobileNavigation();
+            else if (tvPresentationActive && !document.fullscreenElement) setTvPresentation(false);
+        });
+
+        window.addEventListener('resize', () => {
+            if (mobileNavigationOpen && !window.matchMedia('(max-width: 768px)').matches) closeMobileNavigation();
+        });
+
+        function switchView(viewName) {
+            currentView = viewName;
+            ['tv', 'admin', 'sheets'].forEach(v => {
+                const sec = document.getElementById(`view-${v}`);
+                if (sec) {
+                    if (v === viewName) {
+                        sec.classList.remove('hidden');
+                    } else {
+                        sec.classList.add('hidden');
+                    }
+                }
+                [`btn-${v}-view`, `mobile-btn-${v}-view`].forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (!btn) return;
+                    const selected = v === viewName;
+                    btn.classList.toggle('bg-brand-purple', selected);
+                    btn.classList.toggle('text-white', selected);
+                    btn.classList.toggle('shadow', selected);
+                    btn.classList.toggle('text-slate-300', !selected);
+                    btn.classList.toggle('hover:text-white', !selected);
+                    if (selected) btn.setAttribute('aria-current', 'page');
+                    else btn.removeAttribute('aria-current');
+                });
+            });
+            const tvTasks = document.getElementById('tv-tasks-container');
+            const adminTasks = document.getElementById('admin-tasks-list');
+            if (viewName === 'tv') {
+                if (adminTasks) adminTasks.innerHTML = '';
+                updateTvDisplay();
+            }
+            if (viewName === 'admin') {
+                if (tvTasks) tvTasks.innerHTML = '';
+                renderAdminTasks();
+                renderAdminDirectivesEditor();
+                renderAdminSupervisorsEditor();
+            }
+            if (viewName === 'sheets') {
+                if (tvTasks) tvTasks.innerHTML = '';
+                if (adminTasks) adminTasks.innerHTML = '';
+            }
+            if (mobileNavigationOpen) closeMobileNavigation();
+        }
+
+        function applyTheme(theme, persist = true) {
+            currentTheme = theme === 'light' ? 'light' : 'dark';
+            const html = document.getElementById('html-root');
+            html.dataset.theme = currentTheme;
+            html.classList.toggle('dark', currentTheme === 'dark');
+            html.style.colorScheme = currentTheme;
+            if (persist) {
+                try { localStorage.setItem('smartdisplay_theme', currentTheme); } catch (_) { /* UI still works without storage. */ }
+            }
+            const isDark = currentTheme === 'dark';
+            ['theme-icon', 'mobile-theme-icon'].forEach(id => {
+                const icon = document.getElementById(id);
+                if (icon) icon.className = `fa-solid ${isDark ? 'fa-sun' : 'fa-moon'} text-slate-950`;
+            });
+            ['theme-label', 'mobile-theme-label'].forEach(id => {
+                const label = document.getElementById(id);
+                if (label) label.textContent = isDark ? 'Day Mode' : 'Night Mode';
+            });
+            ['theme-toggle-btn', 'mobile-theme-toggle-btn'].forEach(id => {
+                const button = document.getElementById(id);
+                if (button) {
+                    button.setAttribute('aria-label', isDark ? 'Switch to Day Mode' : 'Switch to Night Mode');
+                    button.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+                }
+            });
+        }
+
+        function toggleTheme() {
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark', true);
+        }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('smartdisplay_lang', lang);
+            const t = translations[lang] || translations['en'];
+
+            const htmlRoot = document.getElementById('html-root');
+            if (htmlRoot) htmlRoot.dir = t.dir;
+
+            ['en', 'ar', 'ms'].forEach(l => {
+                [`lang-btn-${l}`, `mobile-lang-btn-${l}`].forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (!btn) return;
+                    const selected = l === lang;
+                    btn.classList.toggle('text-brand-yellow', selected);
+                    btn.classList.toggle('bg-brand-purple', selected);
+                    btn.classList.toggle('shadow', selected);
+                    btn.classList.toggle('text-slate-400', !selected);
+                    btn.classList.toggle('hover:text-white', !selected);
+                    btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+                });
+            });
+
+            safeSetText('txt-app-title', t.appTitle);
+            safeSetText('txt-app-subtitle', t.appSub);
+            safeSetText('txt-tab-tv', t.tabTv);
+            safeSetText('txt-tab-admin', t.tabAdmin);
+            safeSetText('txt-tab-sheets', t.tabSheets);
+            safeSetText('mobile-txt-tab-tv', t.tabTv);
+            safeSetText('mobile-txt-tab-admin', t.tabAdmin);
+            safeSetText('mobile-txt-tab-sheets', t.tabSheets);
+            safeSetText('txt-enter-fullscreen', t.enterFullscreen);
+            safeSetText('txt-exit-fullscreen', t.exitFullscreen);
+            safeSetText('txt-tv-status-bar', t.tvStatusBar);
+            safeSetText('tv-dept-sub', t.tvDeptSub);
+            safeSetText('txt-ticker-badge', t.tickerBadge);
+            safeSetText('txt-tasks-header', t.tasksHeader);
+            safeSetText('txt-directives-title', t.directivesTitle);
+            safeSetText('txt-supervisors-title', t.supervisorsTitle);
+            safeSetText('txt-progress-label', t.progressLabel);
+            safeSetText('txt-footer-screen', t.footerScreen);
+            safeSetText('txt-footer-sync', t.footerSync);
+            safeSetText('txt-admin-title', t.adminTitle);
+            safeSetText('txt-admin-desc', t.adminDesc);
+            safeSetText('txt-select-day-label', t.selectDayLabel);
+            safeSetText('txt-add-heading', t.addHeading);
+            safeSetText('lbl-task-title', t.lblTaskTitle);
+            safeSetText('lbl-task-dept', t.lblTaskDept);
+            safeSetText('lbl-task-priority', t.lblTaskPriority);
+            safeSetText('lbl-task-time', t.lblTaskTime);
+            safeSetText('lbl-task-desc', t.lblTaskDesc);
+            safeSetText('lbl-task-image', t.lblTaskImage);
+            safeSetText('btn-upload-task-img', t.btnUploadTaskImg);
+            safeSetText('btn-submit-task', t.btnSubmitTask);
+            safeSetText('txt-step2-prefix', t.step2Prefix);
+            safeSetText('btn-reset-tasks', t.btnResetTasks);
+            safeSetText('txt-edit-directives-heading', t.editDirectivesHeading);
+            safeSetText('btn-add-directive', t.btnAddDirective);
+            safeSetText('txt-edit-supervisors-heading', t.editSupervisorsHeading);
+            safeSetText('btn-add-supervisor', t.btnAddSupervisor);
+            safeSetText('txt-edit-ticker-heading', t.editTickerHeading);
+            safeSetText('btn-update-ticker', t.btnUpdateTicker);
+            safeSetText('txt-edit-logo-heading', t.editLogoHeading);
+            safeSetText('btn-upload-logo-file', t.btnUploadLogoFile);
+            safeSetText('btn-reset-logo', t.btnResetLogo);
+
+            const deptSelect = document.getElementById('task-dept');
+            if (deptSelect && t.deptOptions) {
+                deptSelect.innerHTML = t.deptOptions.map(opt => `<option value="${opt.value}">${opt.text}</option>`).join('');
+            }
+
+            const prioritySelect = document.getElementById('task-priority');
+            if (prioritySelect && t.priorityOptions) {
+                prioritySelect.innerHTML = t.priorityOptions.map(opt => `<option value="${opt.value}">${opt.text}</option>`).join('');
+            }
+
+            populateDayDropdown();
+            updateTvDisplay();
+            renderAdminTasks();
+            renderAdminDirectivesEditor();
+            renderAdminSupervisorsEditor();
+        }
+
+        function persistImmediate() {
+            if (typeof window.persistBusinessSettings === 'function') {
+                window.persistBusinessSettings();
+            }
+        }
+
+        function populateDayDropdown() {
+            const select = document.getElementById('admin-day-select');
+            if (!select) return;
+            select.innerHTML = '';
+            const t = translations[currentLang] || translations['en'];
+            TASK_DAYS.forEach((stdDay, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = t.days[idx];
+                if (idx === currentDayIndex) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function synchronizeDaySelectors() {
+            document.querySelectorAll('[data-global-day-select]').forEach(select => {
+                const committedValue = String(currentDayIndex);
+                if (select.value !== committedValue) select.value = committedValue;
+            });
+        }
+
+        function applySelectedOperationalDay(dayName, renderViews = true) {
+            const nextIndex = TASK_DAYS.indexOf(dayName);
+            if (nextIndex < 0) return false;
+            selectedOperationalDay = dayName;
+            currentDayIndex = nextIndex;
+            synchronizeDaySelectors();
+            if (renderViews) {
+                updateTvDisplay();
+                renderAdminTasks();
+            }
+            return true;
+        }
+
+        function changeActiveDay(dayVal) {
+            const requestedDay = TASK_DAYS[Number(dayVal)];
+            if (!requestedDay || requestedDay === selectedOperationalDay) {
+                synchronizeDaySelectors();
+                return;
+            }
+            if (typeof window.persistSelectedDay !== 'function') {
+                synchronizeDaySelectors();
+                showToast('The selected day could not be saved yet. Please try again.', 'error');
+                return;
+            }
+            window.persistSelectedDay(requestedDay).catch(error => {
+                synchronizeDaySelectors();
+                showToast(`Selected day was not saved: ${error.message}`, 'error');
+            });
+        }
+
+        function updateTvDisplay() {
+            const t = translations[currentLang] || translations['en'];
+            const stdDayName = selectedOperationalDay;
+            const displayDayName = t.days[currentDayIndex];
+
+            safeSetText('tv-day-title', `${t.tvDayTitlePrefix}${displayDayName}`);
+            safeSetText('tv-ticker-text', tickerText);
+
+            // Render Tasks for current day
+            const dayTasks = tasksData[stdDayName] || [];
+            const container = document.getElementById('tv-tasks-container');
+            const taskCountBadge = document.getElementById('tv-task-count');
+
+            if (currentView !== 'tv') {
+                if (container) container.innerHTML = '';
+                return;
+            }
+
+            if (taskCountBadge) taskCountBadge.textContent = `${dayTasks.length} Tasks Scheduled`;
+            if (container) {
+                container.innerHTML = '';
+                if (dayTasks.length === 0) {
+                    container.innerHTML = `
+                        <div class="bg-white/80 dark:bg-slate-900/80 p-8 rounded-2xl border border-purple-500/20 text-center space-y-2">
+                            <i class="fa-solid fa-circle-check text-4xl text-emerald-500"></i>
+                            <p class="font-bold text-slate-800 dark:text-slate-200">${t.noTasksMsg}</p>
+                        </div>
+                    `;
+                } else {
+                    dayTasks.forEach(task => {
+                        let priorityColor = "bg-blue-500/20 text-blue-600 dark:text-blue-300 border-blue-500/40";
+                        if (task.priority === "Important") priorityColor = "bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-500/40";
+                        if (task.priority === "Urgent") priorityColor = "bg-rose-500/20 text-rose-600 dark:text-rose-300 border-rose-500/40";
+
+                        const card = document.createElement('div');
+                        card.className = "bg-white dark:bg-slate-900 border border-purple-900/20 dark:border-purple-500/30 p-4 rounded-xl shadow-md space-y-3 transition hover:border-[#f2b629]";
+                        card.dataset.taskId = String(task.id);
+                        
+                        let imgHtml = '';
+                        if (task.imageUrl) {
+                            imgHtml = `
+                                <div class="mt-2 overflow-hidden rounded-xl border border-purple-500/30 bg-slate-950/80 p-2 flex justify-center items-center max-h-64 shadow-inner">
+                                    <img src="${task.imageUrl}" class="max-h-60 w-full object-contain rounded-lg shadow-md" alt="${task.title}" onerror="this.parentElement.style.display='none'">
+                                </div>
+                            `;
+                        }
+
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start gap-4">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-black text-slate-900 dark:text-white text-base">${task.title}</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full border font-bold ${priorityColor}">${task.priority}</span>
+                                    </div>
+                                    <p class="text-xs text-purple-700 dark:text-purple-300 font-bold">${task.dept} ${task.time ? '| ' + task.time : ''}</p>
+                                    ${task.desc ? `<p class="text-xs text-slate-600 dark:text-slate-400 font-medium">${task.desc}</p>` : ''}
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-black ${task.status === 'completed' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/40' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'} shrink-0">
+                                    ${task.status === 'completed' ? t.taskDoneStatus : t.taskPendingStatus}
+                                </span>
+                            </div>
+                            ${imgHtml}
+                        `;
+                        container.appendChild(card);
+                    });
+                }
+            }
+
+            // Update Progress Bar
+            const completedCount = dayTasks.filter(tk => tk.status === 'completed').length;
+            const totalCount = dayTasks.length;
+            const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+            const progressBar = document.getElementById('tv-progress-bar');
+            if (progressBar) progressBar.style.width = `${percent}%`;
+            safeSetText('tv-progress-percent', `${percent}%`);
+            safeSetText('tv-progress-text', `${completedCount} of ${totalCount} Tasks Completed`);
+
+            renderDirectives();
+            renderSupervisors();
+        }
+
+        function renderDirectives() {
+            const container = document.getElementById('tv-directives-container');
+            if (!container) return;
+            container.innerHTML = '';
+            directivesData.forEach(dir => {
+                const li = document.createElement('li');
+                li.className = "flex items-start gap-2";
+                li.innerHTML = `
+                    <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5 shrink-0"></i>
+                    <span>${dir}</span>
+                `;
+                container.appendChild(li);
+            });
+        }
+
+        function renderAdminDirectivesEditor() {
+            const container = document.getElementById('admin-directives-editor-list');
+            if (!container) return;
+            container.innerHTML = '';
+            const t = translations[currentLang] || translations['en'];
+
+            directivesData.forEach((dir, idx) => {
+                const row = document.createElement('div');
+                row.className = "flex items-center gap-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm";
+                row.innerHTML = `
+                    <input type="text" value="${dir}" onchange="updateDirectiveField(${idx}, this.value)" placeholder="${t.directivePlaceholder}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-1.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-[#f2b629]">
+                    <button onclick="removeDirectiveRow(${idx})" class="bg-rose-500 hover:bg-rose-600 text-white p-2 rounded-lg transition shrink-0 cursor-pointer" title="Delete Directive">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function addNewDirectiveRow() {
+            directivesData.push("New compliance directive line...");
+            renderAdminDirectivesEditor();
+            updateTvDisplay();
+            persistImmediate();
+        }
+
+        function updateDirectiveField(idx, value) {
+            if (directivesData[idx] !== undefined) {
+                directivesData[idx] = value;
+                updateTvDisplay();
+                persistImmediate();
+            }
+        }
+
+        function removeDirectiveRow(idx) {
+            directivesData.splice(idx, 1);
+            renderAdminDirectivesEditor();
+            updateTvDisplay();
+            persistImmediate();
+        }
+
+        function renderSupervisors() {
+            const container = document.getElementById('tv-supervisors-container');
+            if (!container) return;
+            container.innerHTML = '';
+            supervisorsData.forEach(sup => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center bg-slate-100 dark:bg-slate-800 p-2.5 rounded-lg border border-purple-500/20";
+                item.innerHTML = `
+                    <span class="text-slate-600 dark:text-slate-400 font-medium">${sup.title}</span>
+                    <span class="font-bold text-[#381565] dark:text-[#f2b629]">${sup.name}</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function renderAdminTasks() {
+            const t = translations[currentLang] || translations['en'];
+            const stdDayName = selectedOperationalDay;
+            const displayDayName = t.days[currentDayIndex];
+
+            safeSetText('admin-current-day-label', displayDayName);
+
+            const dayTasks = tasksData[stdDayName] || [];
+            const container = document.getElementById('admin-tasks-list');
+            if (!container) return;
+            if (currentView !== 'admin') {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = '';
+
+            if (dayTasks.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic p-3 text-center bg-white dark:bg-slate-800 rounded-xl">${t.noTasksMsg}</p>`;
+                return;
+            }
+
+            dayTasks.forEach(task => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center bg-white dark:bg-slate-800/90 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white shadow-sm gap-2";
+                item.dataset.taskId = String(task.id);
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        ${task.imageUrl ? `<img src="${task.imageUrl}" class="w-10 h-10 object-cover rounded-lg border border-amber-500/50 shrink-0" alt="Thumb">` : ''}
+                        <div>
+                            <span class="font-extrabold block text-sm">${task.title}</span>
+                            <span class="text-[11px] text-purple-700 dark:text-purple-300 font-bold">${task.dept} ${task.time ? '| ' + task.time : ''}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="toggleTaskStatus(${task.id})" class="px-2.5 py-1.5 rounded-lg text-xs font-black transition cursor-pointer ${task.status === 'completed' ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200'}">
+                            ${task.status === 'completed' ? t.taskDoneStatus : t.taskPendingStatus}
+                        </button>
+                        <button onclick="deleteTask(${task.id})" class="bg-rose-500 hover:bg-rose-600 text-white p-1.5 rounded-lg transition cursor-pointer">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function renderAdminSupervisorsEditor() {
+            const container = document.getElementById('admin-supervisors-editor-list');
+            if (!container) return;
+            container.innerHTML = '';
+            const t = translations[currentLang] || translations['en'];
+
+            supervisorsData.forEach((sup, idx) => {
+                const row = document.createElement('div');
+                row.className = "flex items-center gap-2 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm";
+                row.innerHTML = `
+                    <input type="text" value="${sup.title}" onchange="updateSupervisorField(${idx}, 'title', this.value)" placeholder="${t.rolePlaceholder}" class="w-1/2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-1.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-[#f2b629]">
+                    <input type="text" value="${sup.name}" onchange="updateSupervisorField(${idx}, 'name', this.value)" placeholder="${t.namePlaceholder}" class="w-1/2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-1.5 text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-[#f2b629]">
+                    <button onclick="removeSupervisorRow(${idx})" class="bg-rose-500 hover:bg-rose-600 text-white p-2 rounded-lg transition shrink-0 cursor-pointer" title="Delete Supervisor">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function addNewSupervisorRow() {
+            supervisorsData.push({ title: "New Role", name: "Name" });
+            renderAdminSupervisorsEditor();
+            updateTvDisplay();
+            persistImmediate();
+        }
+
+        function updateSupervisorField(idx, field, value) {
+            if (supervisorsData[idx]) {
+                supervisorsData[idx][field] = value;
+                updateTvDisplay();
+                persistImmediate();
+            }
+        }
+
+        function removeSupervisorRow(idx) {
+            supervisorsData.splice(idx, 1);
+            renderAdminSupervisorsEditor();
+            updateTvDisplay();
+            persistImmediate();
+        }
+
+        function handleTaskImageUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    tempTaskImageUrl = evt.target.result;
+                    const previewBox = document.getElementById('task-img-preview-box');
+                    const previewImg = document.getElementById('task-img-preview');
+                    if (previewBox && previewImg) {
+                        previewImg.src = tempTaskImageUrl;
+                        previewBox.classList.remove('hidden');
+                    }
+                    showToast("Task image attached!");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeTaskImagePreview() {
+            tempTaskImageUrl = null;
+            const fileInput = document.getElementById('task-image-file');
+            const urlInput = document.getElementById('task-image-url');
+            const previewBox = document.getElementById('task-img-preview-box');
+            if (fileInput) fileInput.value = '';
+            if (urlInput) urlInput.value = '';
+            if (previewBox) previewBox.classList.add('hidden');
+        }
+
+        function handleLogoFileUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    customLogoUrl = evt.target.result;
+                    applyCustomLogo(customLogoUrl);
+                    persistImmediate();
+                    showToast("Custom logo uploaded!");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function applyCustomLogo(url) {
+            const mainImg = document.getElementById('custom-logo-img');
+            const mainSvg = document.getElementById('default-logo-svg');
+            const tvImg = document.getElementById('tv-custom-logo-img');
+            const tvSvg = document.getElementById('tv-default-logo-svg');
+
+            if (url) {
+                if (mainImg) { mainImg.src = url; mainImg.classList.remove('hidden'); }
+                if (mainSvg) mainSvg.classList.add('hidden');
+                if (tvImg) { tvImg.src = url; tvImg.classList.remove('hidden'); }
+                if (tvSvg) tvSvg.classList.add('hidden');
+            }
+        }
+
+        async function syncFromGoogleSheet() {
+            const url = document.getElementById('gsheet-url-input').value.trim();
+            const msg = document.getElementById('gsheet-status-msg');
+            const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+            if (!match) {
+                if (msg) msg.textContent = "Please paste a valid Google Sheets link.";
+                showToast("A valid Google Sheets link is required.", "error");
+                return;
+            }
+            if (msg) msg.textContent = "Fetching the public sheet data...";
+            try {
+                const response = await fetch(`https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv`);
+                if (!response.ok) throw new Error(`Google Sheets returned ${response.status}`);
+                const csv = await response.text();
+                if (!csv.trim()) throw new Error("The sheet is empty");
+                document.getElementById('manual-csv-input').value = csv;
+                parseManualCsvInput();
+                if (msg) msg.textContent = "Public sheet imported successfully.";
+            } catch (error) {
+                if (msg) msg.textContent = "Unable to read this sheet. Make sure it is publicly accessible.";
+                showToast("Google Sheets sync failed. Check sharing settings.", "error");
+            }
+        }
+
+        function fillUserSheetUrl() {
+            const input = document.getElementById('gsheet-url-input');
+            if (input) input.value = "https://docs.google.com/spreadsheets/d/179DfUBP0j4Xmh3wzuYmFAiqxh9u4C2CktF3w0QAjlaQ/edit";
+            showToast("Sample URL auto-filled!");
+        }
+
+        function toggleManualPasteBox() {
+            const box = document.getElementById('manual-paste-box');
+            if (box) box.classList.toggle('hidden');
+        }
+
+        function startLiveClock() {
+            const clockEl = document.getElementById('live-clock');
+            const dateEl = document.getElementById('live-date');
+
+            function update() {
+                const now = new Date();
+                if (clockEl) clockEl.textContent = now.toLocaleTimeString('en-MY', {timeZone:'Asia/Kuala_Lumpur'});
+                if (dateEl) dateEl.textContent = now.toLocaleDateString('en-MY', { timeZone:'Asia/Kuala_Lumpur', weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+            }
+            update();
+            setInterval(update, 1000);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            applyTheme(currentTheme, false);
+            setLanguage(currentLang);
+            if (customLogoUrl) applyCustomLogo(customLogoUrl);
+            startLiveClock();
+            setTvPresentation(false);
+        });
+    </script>
+    <style>
+        /* Responsive adaptation. Desktop geometry above 768px remains unchanged. */
+        @media (max-width: 768px) {
+            html, body { max-width: 100%; overflow-x: clip; }
+            body.mobile-nav-open { overflow: hidden !important; }
+
+            #app-header {
+                padding: 0.75rem !important;
+                position: sticky;
+            }
+            .app-header-inner {
+                flex-wrap: nowrap !important;
+                gap: 0.75rem !important;
+            }
+            .brand-lockup {
+                flex: 1 1 auto;
+                min-width: 0;
+                gap: 0.6rem !important;
+            }
+            #main-logo-container {
+                flex: 0 0 clamp(5.5rem, 27vw, 8rem);
+                min-width: 0;
+                min-height: 42px;
+                padding: 0.4rem 0.55rem !important;
+            }
+            #main-logo-container svg,
+            #main-logo-container img {
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+            }
+            .brand-lockup > div:last-child { min-width: 0; }
+            .brand-lockup h1 {
+                display: block !important;
+                font-size: 0.82rem !important;
+                line-height: 1.12 !important;
+                overflow-wrap: anywhere;
+            }
+            .brand-lockup h1 > span:first-child { display: block; }
+            .brand-lockup h1 > span:last-child {
+                display: inline-flex;
+                margin-top: 0.25rem;
+            }
+            .brand-lockup p {
+                font-size: 0.65rem !important;
+                line-height: 1.25 !important;
+            }
+            .desktop-control-cluster { display: none !important; }
+            .mobile-menu-button {
+                display: inline-flex;
+                flex: 0 0 auto;
+                min-width: 64px;
+                min-height: 44px;
+                align-items: center;
+                justify-content: center;
+                gap: 0.45rem;
+                border: 1px solid rgba(242, 182, 41, 0.55);
+                border-radius: 0.75rem;
+                background: rgba(15, 23, 42, 0.88);
+                color: #ffffff;
+                font-size: 0.75rem;
+                font-weight: 800;
+                box-shadow: 0 10px 24px rgba(2, 6, 23, 0.24);
+                cursor: pointer;
+            }
+
+            .mobile-nav-layer {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 80;
+                visibility: hidden;
+                pointer-events: none;
+            }
+            .mobile-nav-layer.is-open {
+                visibility: visible;
+                pointer-events: auto;
+            }
+            .mobile-nav-backdrop {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                border: 0;
+                background: var(--app-overlay);
+                opacity: 0;
+                transition: opacity 180ms ease;
+            }
+            .mobile-nav-layer.is-open .mobile-nav-backdrop { opacity: 1; }
+            .mobile-nav-drawer {
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: min(88vw, 340px);
+                height: 100vh;
+                height: 100dvh;
+                max-height: 100dvh;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+                border-left: 1px solid var(--app-border);
+                background: var(--app-surface);
+                color: var(--app-text);
+                box-shadow: -20px 0 50px rgba(2, 6, 23, 0.36);
+                transform: translateX(102%);
+                transition: transform 220ms ease;
+            }
+            [dir="rtl"] .mobile-nav-drawer {
+                right: auto;
+                left: 0;
+                border-left: 0;
+                border-right: 1px solid var(--app-border);
+                transform: translateX(-102%);
+            }
+            .mobile-nav-layer.is-open .mobile-nav-drawer { transform: translateX(0); }
+            .mobile-drawer-heading {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                gap: 1rem;
+                padding-bottom: 1rem;
+                border-bottom: 1px solid var(--app-border);
+            }
+            .mobile-drawer-heading h2 { font-size: 1.1rem; font-weight: 900; }
+            .mobile-drawer-kicker {
+                color: #a855f7;
+                font-size: 0.68rem;
+                font-weight: 900;
+                letter-spacing: 0.13em;
+            }
+            [data-theme="light"] .mobile-drawer-kicker { color: #381565; }
+            .mobile-drawer-close {
+                display: inline-flex;
+                width: 44px;
+                height: 44px;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid var(--app-border);
+                border-radius: 0.75rem;
+                background: var(--app-surface-muted);
+                color: var(--app-text);
+                cursor: pointer;
+            }
+            .mobile-drawer-section { display: grid; gap: 0.55rem; padding-top: 1.15rem; }
+            .mobile-drawer-label {
+                color: var(--app-text-muted);
+                font-size: 0.68rem;
+                font-weight: 900;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+            .mobile-drawer-action,
+            .mobile-theme-action {
+                display: flex;
+                width: 100%;
+                min-height: 48px;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0.75rem 0.9rem;
+                border: 1px solid var(--app-border);
+                border-radius: 0.85rem;
+                background: var(--app-surface-muted);
+                color: var(--app-text);
+                text-align: start;
+                font-size: 0.82rem;
+                font-weight: 800;
+                cursor: pointer;
+            }
+            .mobile-drawer-action.bg-brand-purple {
+                border-color: rgba(168, 85, 247, 0.55);
+                background: #381565;
+                color: #ffffff;
+            }
+            .mobile-theme-action {
+                border-color: rgba(242, 182, 41, 0.65);
+                background: #f2b629;
+                color: #210b3e;
+            }
+            .mobile-language-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 0.5rem;
+            }
+            .mobile-language-button {
+                min-height: 44px;
+                border: 1px solid var(--app-border);
+                border-radius: 0.75rem;
+                background: var(--app-surface-muted);
+                color: var(--app-text-muted);
+                font-size: 0.72rem;
+                font-weight: 800;
+                cursor: pointer;
+            }
+            .mobile-language-button.bg-brand-purple {
+                background: #381565;
+                color: #f2b629;
+            }
+
+            #app-main { padding: 0.875rem !important; }
+            #view-tv, #view-admin, #view-sheets { width: 100%; min-width: 0; }
+            #tv-status-bar {
+                align-items: stretch !important;
+                gap: 0.75rem;
+                padding: 0.85rem !important;
+            }
+            #tv-status-bar > span { min-width: 0; line-height: 1.45; }
+            .tv-status-actions { flex: 0 0 auto; }
+            #enter-tv-presentation-btn {
+                min-height: 44px;
+                justify-content: center;
+                white-space: nowrap;
+            }
+            #tv-display-frame { border-width: 3px; border-radius: 1rem; }
+            #tv-display-frame > div:first-child {
+                align-items: stretch !important;
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem !important;
+            }
+            #view-tv.tv-presentation-mode #tv-display-frame > div:first-child,
+            #view-tv:fullscreen #tv-display-frame > div:first-child {
+                padding-top: 4.75rem !important;
+            }
+            #tv-display-frame > div:first-child > div:first-child {
+                display: grid !important;
+                grid-template-columns: minmax(7rem, 0.9fr) minmax(0, 1.1fr);
+                align-items: center;
+                gap: 0.8rem !important;
+                width: 100%;
+                min-width: 0;
+            }
+            #tv-logo-container { min-width: 0; width: 100%; padding: 0.55rem !important; }
+            #tv-logo-container svg,
+            #tv-logo-container img { width: 100%; max-width: 100%; height: auto; }
+            #tv-day-title {
+                font-size: clamp(1.05rem, 5vw, 1.3rem) !important;
+                line-height: 1.45 !important;
+                overflow-wrap: anywhere;
+            }
+            #tv-dept-sub { line-height: 1.45; overflow-wrap: anywhere; }
+            #tv-display-frame > div:first-child > div:last-child {
+                align-self: stretch;
+                text-align: center !important;
+                padding: 0.65rem 0.9rem !important;
+            }
+            #live-clock { font-size: 1.25rem !important; }
+            #tv-display-frame > div:nth-child(2) {
+                align-items: flex-start;
+                flex-wrap: wrap;
+                gap: 0.65rem !important;
+                padding: 0.75rem 1rem !important;
+            }
+            #tv-display-frame > div:nth-child(2) > div { flex: 1 0 100%; line-height: 1.45; }
+            .tv-body-grid {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) !important;
+                min-height: 0 !important;
+                gap: 1.25rem !important;
+                padding: 1rem !important;
+            }
+            .tv-body-grid > * { grid-column: auto !important; min-width: 0; }
+            .tv-body-grid .flex.justify-between.items-center { flex-wrap: wrap; gap: 0.75rem; }
+            #tv-tasks-container { min-height: 0 !important; }
+            #tv-tasks-container > [data-task-id] { padding: 1rem !important; }
+            #tv-tasks-container > [data-task-id] > div:first-child { flex-wrap: wrap; }
+            #tv-tasks-container > [data-task-id] > div:first-child > div { min-width: 0; }
+            #tv-tasks-container span, #tv-tasks-container p { overflow-wrap: anywhere; }
+            #tv-display-frame > div:last-child {
+                align-items: flex-start !important;
+                flex-direction: column;
+                gap: 0.5rem;
+                padding: 0.75rem 1rem !important;
+            }
+
+            #view-admin > div,
+            #view-sheets > div { padding: 1rem !important; border-radius: 1rem !important; }
+            #view-admin > div > div:first-child,
+            #view-sheets > div > div:first-child {
+                align-items: stretch !important;
+                flex-direction: column;
+                gap: 1rem !important;
+            }
+            #view-admin h2, #view-sheets h2 {
+                font-size: 1.35rem !important;
+                line-height: 1.35;
+                overflow-wrap: anywhere;
+            }
+            #view-admin > div > div:first-child > div:last-child {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+                width: 100%;
+                align-items: stretch;
+            }
+            #admin-day-select { width: 100%; min-height: 46px; }
+            #view-admin .grid-cols-12 { grid-template-columns: minmax(0, 1fr) !important; gap: 1rem !important; }
+            #view-admin .grid-cols-12 > * { grid-column: auto !important; min-width: 0; }
+            #view-admin .grid-cols-12 > div,
+            #view-admin .grid-cols-12 > div > div { max-width: 100%; }
+            #view-admin input:not([type="file"]),
+            #view-admin select,
+            #view-admin textarea,
+            #view-sheets input,
+            #view-sheets textarea {
+                min-width: 0;
+                max-width: 100%;
+                font-size: 16px !important;
+            }
+            #view-admin button,
+            #view-sheets button { min-height: 44px; }
+            #add-task-form > div:nth-child(5) > div:nth-child(2) {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            #task-image-url { width: 100%; min-width: 0; }
+            #admin-tasks-list {
+                width: 100%;
+                max-width: 100%;
+                max-height: none !important;
+                overflow: visible !important;
+                padding-right: 0 !important;
+            }
+            #admin-tasks-list > div {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr);
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                align-items: stretch !important;
+                gap: 0.75rem !important;
+            }
+            #admin-tasks-list > div > div:first-child,
+            #admin-tasks-list > div > div:first-child > div { min-width: 0; }
+            #admin-tasks-list > div > div:first-child span { overflow-wrap: anywhere; }
+            #admin-tasks-list > div > div:last-child {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) 44px;
+                width: 100%;
+                gap: 0.6rem;
+            }
+            #admin-tasks-list > div > div:last-child button { min-height: 44px; }
+            #admin-directives-editor-list,
+            #admin-supervisors-editor-list {
+                max-height: none !important;
+                overflow: visible !important;
+                padding-right: 0 !important;
+            }
+            #admin-directives-editor-list > div,
+            #admin-supervisors-editor-list > div {
+                align-items: stretch !important;
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) 44px;
+            }
+            #admin-supervisors-editor-list > div {
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
+            }
+            #admin-directives-editor-list button,
+            #admin-supervisors-editor-list button { min-height: 44px; min-width: 44px; }
+            #admin-supervisors-editor-list input { width: 100% !important; }
+            #view-admin .pt-2.border-t > .flex.justify-between,
+            #view-admin .space-y-2\.5 > .flex.justify-between {
+                align-items: flex-start;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+            }
+            #view-admin .pt-2.border-t.space-y-2 > .flex,
+            #view-admin .pt-2.border-t.space-y-2 > div.flex {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            #admin-ticker-input { width: 100%; }
+            #view-sheets > div > div:first-child > span { align-self: flex-start; }
+            #view-sheets .flex.flex-col.sm\:flex-row { align-items: stretch; }
+            #manual-csv-input { max-height: 45vh; }
+            #toast-container {
+                left: 0.875rem;
+                right: 0.875rem;
+                bottom: max(0.875rem, env(safe-area-inset-bottom));
+                max-width: none;
+            }
+            #smartdisplay-site-attribution {
+                margin-top: 0.75rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
+                font-size: 0.72rem;
+            }
+        }
+
+        @media (max-width: 430px) {
+            #add-task-form .grid-cols-2 { grid-template-columns: minmax(0, 1fr) !important; }
+            #view-admin > div > div:first-child > div:last-child { padding: 0.75rem !important; }
+            #view-admin > div > div:first-child > div:last-child label { justify-content: flex-start; }
+            #admin-supervisors-editor-list > div { grid-template-columns: minmax(0, 1fr) 44px; }
+            #admin-supervisors-editor-list > div input { grid-column: 1; }
+            #admin-supervisors-editor-list > div button { grid-column: 2; grid-row: 1 / span 2; }
+        }
+
+        @media (max-width: 340px) {
+            #app-header { padding-left: 0.625rem !important; padding-right: 0.625rem !important; }
+            .mobile-menu-button { min-width: 44px; width: 44px; padding: 0; }
+            .mobile-menu-button span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+            .brand-lockup p { display: none; }
+            #main-logo-container { flex-basis: 5rem; }
+            #app-main { padding-left: 0.625rem !important; padding-right: 0.625rem !important; }
+            #tv-display-frame > div:first-child > div:first-child { grid-template-columns: minmax(6rem, 0.85fr) minmax(0, 1.15fr); }
+            #view-admin > div, #view-sheets > div { padding: 0.75rem !important; }
+            #view-admin .p-5, #view-sheets .p-5 { padding: 0.875rem !important; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+    <script>
+        /* Server-backed application state. UI preferences (language/theme) stay local only. */
+        (() => {
+            let stateVersion = 0;
+            let source = null;
+            let reconciling = false;
+            let reconciliationQueued = false;
+            let reconciliationPromise = null;
+            let bufferedEvents = [];
+            let reconnectTimer = null;
+            let lastRealtimeActivity = Date.now();
+            let lastAuthoritativeReconciliation = 0;
+
+            const request = async (url, options = {}) => {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.staffAuth?.csrfToken || '', ...(options.headers || {}) },
+                    cache: 'no-store'
+                });
+                const body = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    if ([401,403].includes(response.status)) void window.refreshStaffSession?.();
+                    throw new Error(body.message || body.error || `Request failed (${response.status})`);
+                }
+                return body;
+            };
+
+            const rebuildTaskViews = () => {
+                tasksData = canonicalTaskState.toDayObject();
+            };
+
+            const refreshViews = () => {
+                updateTvDisplay();
+                renderAdminTasks();
+                if (currentView === 'admin') {
+                    renderAdminDirectivesEditor();
+                    renderAdminSupervisorsEditor();
+                }
+            };
+
+            const applyLogoState = () => {
+                if (customLogoUrl) {
+                    applyCustomLogo(customLogoUrl);
+                } else {
+                    const mainImg = document.getElementById('custom-logo-img');
+                    const mainSvg = document.getElementById('default-logo-svg');
+                    const tvImg = document.getElementById('tv-custom-logo-img');
+                    const tvSvg = document.getElementById('tv-default-logo-svg');
+                    if (mainImg) mainImg.classList.add('hidden');
+                    if (mainSvg) mainSvg.classList.remove('hidden');
+                    if (tvImg) tvImg.classList.add('hidden');
+                    if (tvSvg) tvSvg.classList.remove('hidden');
+                }
+            };
+
+            const applySettings = data => {
+                if (!data || typeof data !== 'object') return;
+                if (typeof data.siteName === 'string' && data.siteName.trim()) {
+                    safeSetText('txt-app-title', data.siteName);
+                    document.title = data.siteName;
+                }
+                if (Object.prototype.hasOwnProperty.call(data, 'directives')) directivesData = Array.isArray(data.directives) ? data.directives : [];
+                if (Object.prototype.hasOwnProperty.call(data, 'supervisors')) supervisorsData = Array.isArray(data.supervisors) ? data.supervisors : [];
+                if (Object.prototype.hasOwnProperty.call(data, 'tickerText')) tickerText = typeof data.tickerText === 'string' ? data.tickerText : '';
+                if (Object.prototype.hasOwnProperty.call(data, 'customLogoUrl')) customLogoUrl = data.customLogoUrl || null;
+                const tickerInput = document.getElementById('admin-ticker-input');
+                if (tickerInput && document.activeElement !== tickerInput) tickerInput.value = tickerText;
+                applyLogoState();
+            };
+
+            const replaceSnapshot = snapshot => {
+                if (!snapshot || !snapshot.tasks) return false;
+                const revision = Number(snapshot.version);
+                if (!Number.isSafeInteger(revision) || revision < 0) return false;
+                if (!applySelectedOperationalDay(snapshot.selectedDay, false)) return false;
+                canonicalTaskState.replaceSnapshot(snapshot.tasks);
+                rebuildTaskViews();
+                applySettings(snapshot);
+                stateVersion = revision;
+                return true;
+            };
+
+            const applyBusinessEvent = event => {
+                if (!event || typeof event !== 'object') return { needsReconciliation: true, changed: false };
+                const revision = Number(event.version);
+                if (!Number.isSafeInteger(revision) || revision <= 0) return { needsReconciliation: true, changed: false };
+                if (revision <= stateVersion) return { needsReconciliation: false, changed: false };
+                if (revision !== stateVersion + 1) return { needsReconciliation: true, changed: false };
+
+                let tasksChanged = false;
+                switch (event.operation) {
+                    case 'created':
+                    case 'updated':
+                        if (!canonicalTaskState.upsertTask(event.task)) return { needsReconciliation: true, changed: false };
+                        tasksChanged = true;
+                        break;
+                    case 'deleted':
+                        canonicalTaskState.deleteTask(event.deletedId ?? event.result);
+                        tasksChanged = true;
+                        break;
+                    case 'bulk_imported':
+                        if (!Array.isArray(event.tasks)) return { needsReconciliation: true, changed: false };
+                        event.tasks.forEach(task => canonicalTaskState.upsertTask(task));
+                        tasksChanged = true;
+                        break;
+                    case 'reset':
+                        if (!event.snapshot || Number(event.snapshot.version) !== revision || !replaceSnapshot(event.snapshot)) {
+                            return { needsReconciliation: true, changed: false };
+                        }
+                        return { needsReconciliation: false, changed: true };
+                    case 'settings_updated':
+                        if (!event.settings || typeof event.settings !== 'object') return { needsReconciliation: true, changed: false };
+                        applySettings(event.settings);
+                        break;
+                    case 'selected_day_changed':
+                        if (!applySelectedOperationalDay(event.selectedDay, false)) return { needsReconciliation: true, changed: false };
+                        break;
+                    default:
+                        return { needsReconciliation: true, changed: false };
+                }
+
+                stateVersion = revision;
+                if (tasksChanged) rebuildTaskViews();
+                return { needsReconciliation: false, changed: true };
+            };
+
+            const reconcileAuthoritativeState = (quiet = false) => {
+                if (reconciling) {
+                    reconciliationQueued = true;
+                    return reconciliationPromise || Promise.resolve(false);
+                }
+                reconciling = true;
+                reconciliationPromise = (async () => {
+                    let succeeded = false;
+                    do {
+                        reconciliationQueued = false;
+                        let snapshot;
+                        try {
+                            snapshot = await request('/api/state', { headers: {} });
+                        } catch (error) {
+                            if (!quiet) showToast(`Unable to synchronize: ${error.message}`, 'error');
+                            return false;
+                        }
+                        if (!replaceSnapshot(snapshot)) {
+                            if (!quiet) showToast('Unable to synchronize: invalid server snapshot', 'error');
+                            return false;
+                        }
+
+                        const pending = bufferedEvents;
+                        bufferedEvents = [];
+                        for (const event of pending) {
+                            const outcome = applyBusinessEvent(event);
+                            if (outcome.needsReconciliation) {
+                                bufferedEvents.push(event);
+                                reconciliationQueued = true;
+                            }
+                        }
+                        refreshViews();
+                        lastAuthoritativeReconciliation = Date.now();
+                        succeeded = true;
+                    } while (reconciliationQueued);
+                    return succeeded;
+                })().finally(() => {
+                    const followUp = reconciliationQueued;
+                    reconciliationQueued = false;
+                    reconciling = false;
+                    reconciliationPromise = null;
+                    if (followUp) queueMicrotask(() => reconcileAuthoritativeState(true));
+                });
+                return reconciliationPromise;
+            };
+
+            const acceptBusinessEvent = event => {
+                if (reconciling) {
+                    bufferedEvents.push(event);
+                    return;
+                }
+                const outcome = applyBusinessEvent(event);
+                if (outcome.needsReconciliation) {
+                    bufferedEvents.push(event);
+                    void reconcileAuthoritativeState(true);
+                } else if (outcome.changed) {
+                    refreshViews();
+                }
+            };
+
+            window.smartdisplayApi = request;
+            window.acceptCommittedChange = acceptBusinessEvent;
+            window.reconcileSmart Display = reconcileAuthoritativeState;
+            const saveSettings = async (successMessage) => {
+                const response = await request('/api/settings', {
+                    method: 'PUT',
+                    body: JSON.stringify({ directives: directivesData, supervisors: supervisorsData, tickerText, customLogoUrl })
+                });
+                acceptBusinessEvent(response);
+                if (successMessage) showToast(successMessage);
+            };
+
+            window.persistBusinessSettings = function () {
+                saveSettings().catch(error => showToast(`Save failed: ${error.message}`, 'error'));
+            };
+
+            window.persistSelectedDay = async function (dayName) {
+                if (!TASK_DAYS.includes(dayName)) throw new Error('Invalid selected day');
+                const response = await request('/api/selected-day', {
+                    method: 'PUT',
+                    body: JSON.stringify({ selectedDay: dayName })
+                });
+                acceptBusinessEvent(response);
+                return response;
+            };
+
+            window.handleAddTask = async function (e) {
+                e.preventDefault();
+                const title = document.getElementById('task-title').value.trim();
+                if (!title) return;
+                const task = {
+                    day: selectedOperationalDay, title,
+                    dept: document.getElementById('task-dept').value,
+                    priority: document.getElementById('task-priority').value,
+                    time: document.getElementById('task-time').value.trim(),
+                    desc: document.getElementById('task-desc').value.trim(),
+                    imageUrl: tempTaskImageUrl || document.getElementById('task-image-url').value.trim() || '',
+                    status: 'pending'
+                };
+                try {
+                    const response = await request('/api/tasks', { method: 'POST', body: JSON.stringify(task) });
+                    acceptBusinessEvent(response);
+                    document.getElementById('add-task-form').reset();
+                    removeTaskImagePreview();
+                    showToast('New task with image published live!');
+                } catch (error) { showToast(`Task was not saved: ${error.message}`, 'error'); }
+            };
+
+            window.toggleTaskStatus = async function (taskId) {
+                const task = canonicalTaskState.get(taskId);
+                if (!task) return;
+                try {
+                    const response = await request(`/api/tasks/${encodeURIComponent(taskId)}`, { method: 'PATCH', body: JSON.stringify({ status: task.status === 'completed' ? 'pending' : 'completed' }) });
+                    acceptBusinessEvent(response);
+                } catch (error) { showToast(`Status was not saved: ${error.message}`, 'error'); }
+            };
+
+            window.deleteTask = async function (taskId) {
+                try {
+                    const response = await request(`/api/tasks/${encodeURIComponent(taskId)}`, { method: 'DELETE', body: '{}' });
+                    acceptBusinessEvent(response);
+                    showToast('Task removed.');
+                } catch (error) { showToast(`Task was not removed: ${error.message}`, 'error'); }
+            };
+
+            window.resetDefaultTasks = async function () {
+                try {
+                    const response = await request('/api/tasks/reset', { method: 'POST', body: '{}' });
+                    acceptBusinessEvent(response);
+                    showToast('Default tasks restored!');
+                } catch (error) { showToast(`Reset failed: ${error.message}`, 'error'); }
+            };
+
+            window.updateTickerText = async function () {
+                const value = document.getElementById('admin-ticker-input').value.trim();
+                if (!value) return;
+                tickerText = value;
+                try { await saveSettings('Moving ticker updated!'); }
+                catch (error) { showToast(`Ticker was not saved: ${error.message}`, 'error'); }
+            };
+
+            window.resetDefaultLogo = async function () {
+                customLogoUrl = null;
+                applyLogoState();
+                try { await saveSettings('Logo reset to default!'); }
+                catch (error) { showToast(`Logo was not saved: ${error.message}`, 'error'); }
+            };
+
+            window.parseManualCsvInput = async function () {
+                const text = document.getElementById('manual-csv-input').value.trim();
+                if (!text) return;
+                const tasks = text.split(/\r?\n/).map((line, index) => {
+                    if (index === 0 && line.toLowerCase().includes('day')) return null;
+                    const parts = line.split(/,|\t/).map(value => value.trim());
+                    if (parts.length < 2 || !TASK_DAYS.includes(parts[0])) return null;
+                    return { day: parts[0], title: parts[1], dept: parts[2] || 'General Office', priority: ['Normal', 'Important', 'Urgent'].includes(parts[3]) ? parts[3] : 'Normal', time: parts[4] || '', desc: parts[5] || '', imageUrl: '', status: 'pending' };
+                }).filter(Boolean);
+                if (!tasks.length) { showToast('No valid tasks found to import.', 'error'); return; }
+                try {
+                    const response = await request('/api/tasks/import', { method: 'POST', body: JSON.stringify({ tasks }) });
+                    acceptBusinessEvent(response);
+                    showToast(`Imported ${tasks.length} tasks successfully!`);
+                } catch (error) { showToast(`Import failed: ${error.message}`, 'error'); }
+            };
+
+            const scheduleReconnect = (delay = 3000) => {
+                if (reconnectTimer) return;
+                reconnectTimer = setTimeout(() => {
+                    reconnectTimer = null;
+                    connectRealtime();
+                }, delay);
+            };
+
+            const connectRealtime = () => {
+                if (source) source.close();
+                const nextSource = new EventSource('/api/events');
+                source = nextSource;
+                lastRealtimeActivity = Date.now();
+                nextSource.addEventListener('ready', () => {
+                    if (source !== nextSource) return;
+                    lastRealtimeActivity = Date.now();
+                    if (reconnectTimer) {
+                        clearTimeout(reconnectTimer);
+                        reconnectTimer = null;
+                    }
+                    void reconcileAuthoritativeState(true);
+                });
+                nextSource.addEventListener('heartbeat', () => {
+                    if (source !== nextSource) return;
+                    lastRealtimeActivity = Date.now();
+                    // A tunnel can replace its origin connection while keeping
+                    // the browser-facing stream open. A low-rate snapshot on a
+                    // healthy heartbeat closes that otherwise invisible gap.
+                    if (lastRealtimeActivity - lastAuthoritativeReconciliation > 20000) {
+                        void reconcileAuthoritativeState(true);
+                    }
+                });
+                nextSource.addEventListener('state', event => {
+                    if (source !== nextSource) return;
+                    lastRealtimeActivity = Date.now();
+                    try {
+                        acceptBusinessEvent(JSON.parse(event.data));
+                    } catch {
+                        void reconcileAuthoritativeState(true);
+                    }
+                });
+                nextSource.onerror = () => {
+                    if (source === nextSource) scheduleReconnect();
+                };
+                return nextSource;
+            };
+
+            setInterval(() => {
+                if (Date.now() - lastRealtimeActivity > 22000) scheduleReconnect(0);
+            }, 5000);
+
+            window.addEventListener('DOMContentLoaded', () => {
+                connectRealtime();
+                void reconcileAuthoritativeState(false);
+            }, { once: true });
+        })();
+    </script>
+    <script src="/upgrade.js?v=20260908-global-header-footer-2"></script>
+</body>
+</html>
