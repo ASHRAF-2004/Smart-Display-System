@@ -81,9 +81,26 @@ def main() -> None:
                         errors = []
                         page.on("pageerror", lambda error: errors.append(str(error)))
                         page.goto(url + "/?channel=" + channel, wait_until="domcontentloaded")
-                        page.wait_for_function(
-                            "(s)=>document.querySelector('#tv-tasks-container')?.textContent.includes(s)",
-                            arg=expected, timeout=25000)
+                        try:
+                            page.wait_for_function(
+                                "(s)=>document.querySelector('#tv-tasks-container')?.textContent.includes(s)",
+                                arg=expected, timeout=12000)
+                        except Exception:
+                            print("BROWSER DIAGNOSTICS", json.dumps({
+                                "url": page.url,
+                                "title": page.title(),
+                                "javascriptErrors": errors,
+                                "pageState": page.evaluate("""() => ({
+                                    currentView: typeof currentView !== 'undefined' ? currentView : 'undefined',
+                                    selectedDay: typeof selectedOperationalDay !== 'undefined' ? selectedOperationalDay : 'undefined',
+                                    timezone: window.displayTimeZone,
+                                    taskText: document.querySelector('#tv-tasks-container')?.innerText?.slice(0,1800),
+                                    taskCount: Object.keys(typeof tasksData !== 'undefined' ? tasksData : {}).length,
+                                    stateVersion: typeof stateVersion !== 'undefined' ? stateVersion : 'undefined'
+                                })"""),
+                            }, indent=2), flush=True)
+                            page.screenshot(path=str(ARTIFACTS / f"debug-{channel}.png"), full_page=True)
+                            raise
                         actual = page.locator("#tv-tasks-container").inner_text()
                         if expected not in actual or any(value in actual for value in absent):
                             raise AssertionError(f"Channel {channel} incorrect: {actual}")
